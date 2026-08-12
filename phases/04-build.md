@@ -155,3 +155,18 @@ Set `awaiting_gate`. Show:
 5. Note: "QA has not run yet — this gate is 'the build compiles and the
    backlog is done', not 'it works'. That's the next phase."
 6. `/oma:gate approve` / `/oma:gate reject "why"`.
+
+## Brownfield
+
+- **`extend`** — the inferred contracts are read-only reference. Both build
+  agents get `.oma/02-architecture/conventions.md` in their dispatch, with this
+  instruction: **match the existing patterns even where you would choose
+  differently.** An agent that rewrites working code in its preferred idiom is
+  worse than useless. Where the conventions document records a contradiction the
+  user resolved at the gate, that resolution is the rule.
+- **`refactor`** — behavior is frozen. The definition of done for every task is
+  that the pre-existing test suite still passes unchanged; a task that requires
+  editing a test to pass is not a refactor, it is a behavior change, and it stops
+  and asks. Work in small slices with the suite run between them.
+- **`audit`** — this phase does not run. The audit-guard hook denies source
+  writes; findings go to `tasks.json` as a backlog the user may act on later.

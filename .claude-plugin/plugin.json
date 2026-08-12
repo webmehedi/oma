@@ -2,7 +2,7 @@
   "name": "oma",
   "displayName": "OMA — One Man Army",
   "description": "A full SDLC team in one plugin: PM, Architect, UX, Frontend, Backend, QA, Security, DevOps, SEO, Marketing and Social agents that take a project idea through phase-gated discovery, architecture, design, build, QA and launch — coordinated through durable on-disk state, with you approving every gate.",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "author": {
     "name": "S M Mehedi Hasan",
     "url": "https://github.com/webmehedi"
@@ -18,6 +18,8 @@
     "architect",
     "ux",
     "mockups",
-    "one-man-army"
+    "one-man-army",
+    "brownfield",
+    "legacy-code"
   ]
 }

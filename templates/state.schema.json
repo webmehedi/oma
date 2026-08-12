@@ -7,6 +7,33 @@
   "required": ["version", "project", "stack", "phase", "gates", "contracts", "handoff_seq"],
   "properties": {
     "version": { "const": 1 },
+    "mode": {
+      "enum": ["greenfield", "brownfield"],
+      "description": "Absent or 'greenfield' = a new project. 'brownfield' = OMA was pointed at an existing codebase; the archaeology phase runs first and the default stack profile is ignored."
+    },
+    "brownfield": {
+      "type": "object",
+      "description": "Present only when mode is 'brownfield'. Written at init and by the archaeology phase.",
+      "required": ["scope"],
+      "properties": {
+        "scope": {
+          "enum": ["extend", "refactor", "audit"],
+          "description": "extend = add a feature, existing contracts read-only; refactor = improve structure with behavior frozen, the test suite is the contract; audit = read-only, produces findings and a backlog, no source changes."
+        },
+        "baseline": {
+          "type": ["object", "null"],
+          "description": "The green/red verdict the archaeologist recorded before any change. null until 00-archaeology runs.",
+          "properties": {
+            "at": { "type": ["string", "null"] },
+            "install": { "enum": ["pass", "fail", "warn", null] },
+            "typecheck": { "enum": ["pass", "fail", "warn", null] },
+            "lint": { "enum": ["pass", "fail", "warn", null] },
+            "build": { "enum": ["pass", "fail", "warn", null] },
+            "test": { "enum": ["pass", "fail", "warn", null] }
+          }
+        }
+      }
+    },
     "project": {
       "type": "object",
       "required": ["name", "slug", "created", "one_liner"],
@@ -40,7 +67,7 @@
       "required": ["current", "status"],
       "properties": {
         "current": {
-          "enum": ["01-discovery", "02-architecture", "03-design", "04-build", "05-qa", "06-devops", "07-growth", "08-ship"]
+          "enum": ["00-archaeology", "01-discovery", "02-architecture", "03-design", "04-build", "05-qa", "06-devops", "07-growth", "08-ship"]
         },
         "status": {
           "enum": ["not_started", "in_progress", "awaiting_gate", "approved", "blocked"]

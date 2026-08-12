@@ -31,6 +31,7 @@ nothing at a gate right now, show current status, stop.
 
    | Gate | Freezes |
    |---|---|
+   | `00-archaeology` | nothing — reconstruction is confirmed here, not frozen |
    | `02-architecture` | `stack`, `data_model` |
    | `03-design` | `api`, `tokens`, `motion` |
 
@@ -44,6 +45,18 @@ nothing at a gate right now, show current status, stop.
    - Set `frozen: true`, `sha256: <hash>`, `version: "1.0"`.
    - From this moment the plugin's PreToolUse hook denies writes to that file.
      Tell the user which files just became read-only, in two lines.
+
+   **Brownfield: an inferred contract must never freeze unreviewed.** If the
+   artifact carries `inferred: true` (the archaeologist reconstructed it rather
+   than authoring it), do not freeze it on a bare `approve`. Show what is being
+   frozen — the entities, the endpoints, the pinned versions — and ask the user
+   to confirm it matches their actual system, naming the low-confidence
+   inferences specifically. A wrong inferred `data-model.md` frozen by default
+   is the single most damaging thing that can happen in brownfield mode: every
+   phase downstream then builds on a false description of the user's own
+   database. On their confirmation, strip `inferred: true` from the artifact
+   before hashing — a frozen contract is authoritative by definition, and the
+   marker would be a lie once the user has vouched for it.
 
    No gate after `03-design` freezes anything — DevOps, Growth and Ship author
    no contracts. If a contract changed during those phases, that happened

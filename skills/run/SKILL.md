@@ -28,10 +28,31 @@ The system never builds on a guess.
 | `not_started` / `approved` | Dispatch the current phase (if `approved`, first advance `phase.current` to the next phase in sequence and reset status/iteration). |
 | `in_progress` | A previous run died mid-phase. Diagnose: check which required artifacts exist, then re-dispatch to fill only the gaps. |
 
-Phase sequence: `01-discovery → 02-architecture → 03-design → 04-build → 05-qa → 06-devops → 07-growth → 08-ship`.
+Phase sequence (greenfield): `01-discovery → 02-architecture → 03-design → 04-build → 05-qa → 06-devops → 07-growth → 08-ship`.
+
+Phase sequence (brownfield, `state.mode == "brownfield"`): the same, prefixed
+with **`00-archaeology`**. The archaeologist reconstructs the `.oma/` artifacts
+from the existing code, then Discovery runs against a project that already has an
+inferred stack, data model and API contract.
 
 `08-ship` is the last phase; its gate ends the project. Approving it does not
 advance to a ninth phase — say the project is complete instead.
+
+**Brownfield scope changes what later phases do**, and the playbooks read
+`state.brownfield.scope` to adapt:
+- `extend` — Discovery scopes to the new feature; inferred contracts are
+  read-only reference for the build.
+- `refactor` — behavior is frozen; QA's job becomes proving the existing test
+  suite still passes, not adding features.
+- `audit` — the pipeline produces findings and a backlog and writes **no source
+  code** (a hook enforces this: every write outside `.oma/` is denied). The
+  sequence is shorter — **`00-archaeology → 05-qa → 06-devops → 08-ship`**,
+  skipping Discovery, Architecture, Design and Build entirely. QA runs the real
+  pipeline and files findings nobody is dispatched to fix; `06-devops` runs its
+  **Stage A security review only** (authoring CI or a Dockerfile would be a
+  source write, and is out of scope); `08-ship` produces an **audit report**
+  instead of a ship report. Say plainly at each gate that this is assessment,
+  not work in progress.
 
 ## 3. Execute the phase
 

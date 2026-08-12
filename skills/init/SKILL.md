@@ -13,12 +13,33 @@ brief the Project Manager can work from, and stand up the workspace.
 - If `.oma/state.json` already exists: STOP. Tell the user this project is
   already OMA-managed, show two lines of status, point at `/oma:status` and
   `/oma:phase`. Never re-initialize over an existing workspace.
-- If the current directory is not empty and not a git repo, note (don't block)
-  that OMA works best from an empty directory or a fresh repo.
 - If no idea was given in `$ARGUMENTS`, ask for one sentence about what they
-  want to build before doing anything else.
+  want to build (greenfield) or do to their existing project (brownfield) before
+  doing anything else.
 
-## 1. Clarify
+## 0b. Greenfield or brownfield?
+
+Look before asking: does the directory already contain source code (a
+`package.json` with real dependencies, a `src/`, a git history with commits that
+aren't just OMA's)? An empty or near-empty directory is **greenfield**; an
+existing codebase is **brownfield**.
+
+- **Greenfield** — the normal path. Continue at step 1.
+- **Brownfield** — an existing repository. Confirm with the user that they want
+  OMA to work on the code that's here, then ask **one** required question: the
+  scope mode, because it changes everything downstream —
+
+  | Mode | Means | OMA will |
+  |---|---|---|
+  | `extend` | add a feature | scope Discovery to the new feature; treat existing contracts as read-only reference |
+  | `refactor` | improve structure, behavior unchanged | freeze behavior; the existing test suite becomes the contract QA proves nothing broke |
+  | `audit` | assess only | write findings and a prioritized backlog; change no source code at all |
+
+  Then take the brownfield path at step 2b. Do **not** run the greenfield intake
+  questions — requirements come after the archaeologist has read the code, not
+  before, and the default stack profile is ignored: the codebase's real stack wins.
+
+## 1. Clarify (greenfield)
 
 Draft your understanding of the idea in 2-3 sentences, then ask the user the
 questions whose answers change what gets built. Use the AskUserQuestion tool,
@@ -43,6 +64,7 @@ as an assumption in the brief.
 ```
 .oma/
 ├── brief.md
+├── 00-archaeology/   ← brownfield only
 ├── 01-discovery/  02-architecture/  02-architecture/adr/
 ├── 03-design/  03-design/screens/  03-design/mockups/
 ├── 04-build/  05-qa/  05-qa/reports/  06-devops/
@@ -77,6 +99,30 @@ Write **`.oma/state.json`** conforming to `${CLAUDE_PLUGIN_ROOT}/templates/state
 }
 ```
 
+For **greenfield**, `phase.current` is `01-discovery` and there is no `mode`
+field (it defaults to greenfield).
+
+## 2b. Brownfield workspace
+
+Same workspace and same `state.json`, with these differences:
+
+- Create `.oma/00-archaeology/` as well.
+- `phase.current` is **`00-archaeology`**, not `01-discovery` — the archaeologist
+  runs before anything else.
+- Add the brownfield fields:
+
+  ```json
+  "mode": "brownfield",
+  "brownfield": { "scope": "<extend|refactor|audit>", "baseline": null },
+  ```
+
+- `stack.profile` is **`custom`** with `resolved: null` — the default profile is
+  ignored; the archaeologist writes `stack.md` from the real code.
+- `brief.md` records the user's *goal for the existing project* (the feature to
+  add, the refactor target, or the audit's focus) — not a from-scratch idea.
+  Requirements are deliberately absent here; they come in Discovery, after the
+  code has been read.
+
 Write an initial **`CLAUDE.md`** at the repo root from
 `${CLAUDE_PLUGIN_ROOT}/templates/claude-md.md` (fill what's known; stack summary
 comes from the chosen profile; conventions section can say "established at the
@@ -84,12 +130,20 @@ Architecture gate").
 
 If the directory is not a git repository, ask the user whether to `git init`
 (recommended — OMA commits once per approved phase and tags gates for rollback;
-it never pushes). Respect their answer.
+it never pushes). Respect their answer. **For brownfield, a git repo almost
+always exists — never `git init` over it, and never make a first commit without
+asking; the archaeologist needs the history intact and untouched.**
 
 ## 3. Hand back
 
-Print a compact summary: project name, one-liner, stack, and the phase map
-(Discovery → Architecture → Design → Build → QA → DevOps → Growth → Ship),
-noting that every phase stops at a gate you approve. End with exactly:
+**Greenfield** — print a compact summary: project name, one-liner, stack, and the
+phase map (Discovery → Architecture → Design → Build → QA → DevOps → Growth →
+Ship), noting that every phase stops at a gate you approve. End with exactly:
 
 > Next: `/oma:run` to start Discovery.
+
+**Brownfield** — print the project name, the scope mode and what it permits, and
+the plain statement that the first step reads the code without changing a byte of
+it. End with exactly:
+
+> Next: `/oma:run` to read your codebase (the archaeologist runs first — it changes no source).

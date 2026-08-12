@@ -11,9 +11,9 @@ Architect, UX Designer, Frontend, Backend, QA, Security, DevOps, SEO, Marketer,
 Social — and stops at a gate after every phase for your approval.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.1-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.5.0-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://docs.claude.com/en/docs/claude-code/plugins)
-[![Agents](https://img.shields.io/badge/agents-11%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
+[![Agents](https://img.shields.io/badge/agents-12%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-3FA6A0.svg?style=flat-square)](#-contributing)
 
 *You are the one-person company. OMA is your team.*
@@ -48,10 +48,13 @@ Three things make it different from "ask an AI to build my app":
    "the tests pass" is checkable against reality — and in validation, that's
    exactly what caught nine tasks marked done against tests that never existed.
 
-> **Status: M4, validated.** All eight phases are implemented *and* proven
-> end-to-end on a real project — one idea taken from a blank directory to a
-> tagged `oma/ship` with a tested application, a security review, CI, a deploy
-> runbook and launch material. See [Proven on a real project](#-proven-on-a-real-project).
+> **Status: M5.** All eight phases are implemented and proven end-to-end on a
+> real project — one idea taken from a blank directory to a tagged `oma/ship`
+> with a tested application, a security review, CI, a deploy runbook and launch
+> material. **v0.5.0 adds brownfield mode:** point OMA at a repository that
+> already exists and it reads the code first. See
+> [Proven on a real project](#-proven-on-a-real-project) and
+> [Existing codebases](#-existing-codebases).
 
 ## 📑 Table of contents
 
@@ -61,6 +64,7 @@ Three things make it different from "ask an AI to build my app":
 - 👥 [The team](#-the-team)
 - ⚡ [Commands](#-commands)
 - 🔧 [How it works](#-how-it-works)
+- 🗿 [Existing codebases](#-existing-codebases)
 - 🧪 [Proven on a real project](#-proven-on-a-real-project)
 - 🧱 [The default stack](#-the-default-stack)
 - 📋 [Requirements](#-requirements)
@@ -117,6 +121,7 @@ next action. Close your laptop mid-project, come back next week, continue.
 
 | # | Phase | Agent(s) | Produces | Freezes |
 |---|---|---|---|---|
+| 00 | **Archaeology** *(brownfield only)* | Archaeologist | Baseline (green/red, recorded before anything changes), codebase map, and inferred stack, data model, API contract and conventions | — |
 | 01 | **Discovery** | Project Manager | PRD with stable `REQ-###` ids, scope boundary, personas, success metrics | — |
 | 02 | **Architecture** | Architect | `stack.md` with proven version pins, data model, API contract, ADRs | stack, data model |
 | 03 | **Design** | UX Designer | Design system, `tokens.json`, motion spec, **runnable HTML/CSS mockups** | api, tokens, motion |
@@ -180,6 +185,7 @@ to change. The Frontend agent then treats mockup fidelity as its definition of d
 | `oma-seo` | Metadata, canonical URLs, sitemap, robots, JSON-LD **written into the codebase**, plus the keyword brief | ✅ v0.4 |
 | `oma-marketer` | Positioning, landing copy, launch plan — every claim traced to a shipped requirement | ✅ v0.4 |
 | `oma-social` | 30-day calendar and the actual post drafts, in each platform's real format | ✅ v0.4 |
+| `oma-archaeologist` | Reads an existing codebase and reconstructs stack, data model, API contract, conventions and ADRs — every one marked inferred, plus a green/red baseline | ✅ v0.5 |
 
 ## ⚡ Commands
 
@@ -237,6 +243,48 @@ flowchart TD
   you can make, the system stops and asks rather than building on a guess.
 
 Full architecture and rationale: **[DESIGN.md](DESIGN.md)**.
+
+## 🗿 Existing codebases
+
+Run `/oma:init` in a directory that already has code and OMA switches to
+**brownfield mode**. Instead of inventing a project, it reads yours.
+
+```
+/oma:init "add recurring invoices"     # in your existing repo
+```
+
+You pick a scope, and it changes what the whole pipeline is allowed to do:
+
+| Scope | For | OMA will |
+|---|---|---|
+| `extend` | adding a feature | scope Discovery to the new work; treat the existing contracts as read-only reference; **match your conventions even where it would choose differently** |
+| `refactor` | restructuring | freeze behavior — your existing test suite becomes the contract, and a task that needs a test edited to pass stops and asks, because that's a behavior change wearing a refactor's coat |
+| `audit` | assessing | change **no source code at all** — a hook denies every write outside `.oma/` — and hand back prioritized findings with evidence, plus a backlog nobody has started |
+
+**A new phase runs first.** `oma-archaeologist` reconstructs the artifacts a
+greenfield team would have written — `stack.md` from the lockfile (not the
+manifest's ranges), the data model from your schema, an API contract from your
+real routes, and `conventions.md` describing how your codebase actually does
+error handling, validation and data access. From there, every later phase works
+unchanged, because the pipeline never cared whether those artifacts were
+authored or inferred.
+
+Three rules make it safe to point at code you care about:
+
+1. **A baseline is recorded before anything else.** install → typecheck → lint →
+   build → test, with real exit codes, written down. If your project is already
+   red, that's the finding — OMA never quietly repairs pre-existing failures and
+   can never be blamed for them later, because the arrival state is on disk.
+2. **Everything is marked `inferred: true` and cannot freeze until you confirm
+   it.** A wrong reconstructed data model is the most damaging thing that can
+   happen here: every phase downstream would build on a false description of
+   your own database. So the archaeology gate asks you to check the
+   low-confidence inferences specifically.
+3. **Conventions are extracted, not imposed.** The default stack profile is
+   ignored entirely. Where your codebase contradicts itself, the archaeologist
+   documents both patterns and asks you which is canonical rather than picking —
+   an agent that rewrites working code in its preferred idiom is worse than
+   useless.
 
 ## 🧪 Proven on a real project
 
@@ -332,9 +380,15 @@ test plan — not just code.
 <details>
 <summary><b>Can it work on an existing codebase?</b></summary>
 
-Not yet, properly. Greenfield is the v1 target. Brownfield mode (`extend`,
-`refactor`, `audit`) with a codebase-archaeologist agent is designed and
-specified in [DESIGN.md](DESIGN.md) §18, and lands in M5.
+Yes, as of v0.5.0. Run `/oma:init` in a repo that already has code and OMA
+enters **brownfield mode**: the archaeologist reads the codebase first,
+reconstructs the artifacts a greenfield team would have written, and records a
+green/red baseline before anything changes. Pick a scope — `extend`, `refactor`
+or `audit`. See [Existing codebases](#-existing-codebases).
+
+The reconstruction is the risk, which is why every inferred artifact is marked
+as inferred and none of them can freeze until you have confirmed it matches your
+actual system.
 </details>
 
 <details>
@@ -387,7 +441,12 @@ place to catch a misunderstanding and the most expensive one to miss.
 | **M2** | Discovery / Architecture / Design phases, gates, contract freeze, mockup pipeline | ✅ shipped |
 | **M3** | Build (Frontend ∥ Backend) + QA verification loop + `/oma:change` + `/oma:task` | ✅ shipped · validated end-to-end |
 | **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` + the deploy guard | ✅ shipped · validated end-to-end² |
-| **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | 📋 planned |
+| **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | ✅ shipped · not yet validated³ |
+
+³ The archaeologist, the `00-archaeology` phase, the three scope modes and the
+audit guard are built, and the guard is behaviorally tested (10 cases: source
+writes denied in `audit`, `.oma/` writes allowed, inactive in every other mode).
+It has not yet been run against a real existing codebase.
 
 ² Phases 06–08 were run end-to-end on the same real project as M3, taking it
 from a green build to a tagged `oma/ship`. The security agent ran real

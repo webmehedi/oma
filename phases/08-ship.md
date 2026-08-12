@@ -23,6 +23,18 @@ report is a claim about the state of the repository at ship time**, and it needs
 evidence from ship time. If anything is red, stop and report — do not write a
 ship report over a red build.
 
+## Brownfield `audit` — write an audit report instead
+
+In `audit` scope this phase produces
+`.oma/08-ship/audit-report.md` from
+`${CLAUDE_PLUGIN_ROOT}/templates/audit-report.md`, and **skips step 2 entirely**
+— an audit does not write the user's README. Step 1's verification run still
+happens: the audit's central number is whether the project is green *now*,
+compared against the baseline the archaeologist recorded on arrival.
+
+The report is findings, prioritized, each with evidence and an effort estimate,
+plus the backlog in `tasks.json` — handed over, not started.
+
 ## Step 2 — the project's README
 
 Write `README.md` at the repository root — the *project's* readme, for whoever

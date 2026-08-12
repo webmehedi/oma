@@ -20,6 +20,7 @@ Present, compactly:
 # <project name> — <one_liner>
 
 Phase   <current> (<status>, iteration <n>)
+Mode    <omit entirely for greenfield | "brownfield · <scope>" + the baseline verdict>
 Stack   <profile><+overrides if any>
 
 Gates   01-discovery    ✔ approved <date>   <notes if any>
@@ -33,6 +34,11 @@ Recent      <last 1-3 handoffs: "from → summary" one line each>
 ```
 
 Then, only if present:
+- **Brownfield baseline** — if `state.brownfield.baseline` shows any `fail`, say
+  so here and say it was failing *before OMA touched anything*. A user returning
+  after a week must not mistake a pre-existing failure for something OMA broke.
+- **Inferred contracts** — any contract whose artifact still carries
+  `inferred: true`: list them as "reconstructed, not yet confirmed by you".
 - **Security** — once `state.security.last_review` exists: severity counts and
   `open_findings`. A non-zero critical/high count is the most important line on
   this dashboard; put it above the assumptions.

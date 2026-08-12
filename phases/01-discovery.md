@@ -63,3 +63,21 @@ Set phase status to `awaiting_gate`, then show the user:
    a misread requirement caught here costs minutes, caught in Build it costs hours.**
 4. Any assumptions and non-blocking questions from the handoff.
 5. Instruct: `/oma:gate approve` or `/oma:gate reject "what's wrong"`.
+
+## Brownfield
+
+When `state.mode == "brownfield"`, the PM is writing requirements for a system
+that already exists, and the archaeologist's artifacts are its description. Add
+to the dispatch: read `.oma/00-archaeology/map.md` and
+`.oma/02-architecture/conventions.md` first.
+
+- **`extend`** — Discovery covers the **new feature only**. `REQ-###` ids are
+  assigned for the new work; existing behavior is context, not requirements to
+  re-derive. The scope document's most useful section becomes "what this feature
+  must not change".
+- **`refactor`** — there is no new user-facing requirement. Discovery produces a
+  short statement of the structural goal, the behavior that must be preserved,
+  and how preservation will be proved (which is the existing test suite —
+  including its blind spots, named from the baseline).
+- **`audit`** — Discovery is skipped. The user's goal is in `brief.md` and the
+  findings come from assessment, not from requirements.

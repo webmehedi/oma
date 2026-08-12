@@ -726,6 +726,18 @@ The insight: the pipeline doesn't actually care whether `.oma/` artifacts were *
 
 **Why after M3:** brownfield inherits the entire dispatch, gate, contract, and QA machinery. Building it before that machinery is proven means debugging two hard things at once. Once M3 is green, the archaeologist is roughly one agent and one phase definition.
 
+**M5 status: built (v0.5.0).** `oma-archaeologist`, the `00-archaeology` phase,
+the three scope modes, `state.mode`/`state.brownfield`, the baseline and audit
+report templates, and the **audit guard** — a PreToolUse hook that denies every
+write outside `.oma/` when scope is `audit`, making "read-only" a property of the
+system rather than a promise in a prompt. The estimate above held: one agent and
+one phase, plus the mode plumbing through init/run/gate/status and brownfield
+sections in the playbooks whose behavior genuinely changes (01, 04, 05, 06, 08).
+
+Not yet validated against a real existing codebase. The audit guard is
+behaviorally tested (10 cases); the reconstruction quality — which is the whole
+risk of this mode — has not been measured on someone else's repository.
+
 ---
 
 ## 19. Honest assessment

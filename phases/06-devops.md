@@ -81,6 +81,18 @@ user approves over it, that's their decision, made in writing.
 
 ## Stage C — DevOps
 
+**Brownfield `audit` scope: skip this stage entirely.** Authoring a CI workflow,
+a Dockerfile or an env template is writing source, which an audit does not do —
+the audit-guard hook would deny it anyway. Go straight to the gate with the
+security review as the phase's output, and say that CI and deployment were
+assessed, not authored.
+
+**Brownfield `extend` / `refactor`:** if CI, a Dockerfile or deploy config
+already exist, oma-devops **reviews and repairs** them rather than replacing
+them. Read what's there first; a working pipeline someone tuned over a year is
+not improved by a fresh generic one. Report what you'd change and why, and only
+change what's broken or missing.
+
 Dispatch **oma-devops**, foreground:
 
 ```
