@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" role="img" aria-label="The OMA phase pipeline: Discovery, Architecture, Design, Build, QA, each ending in a human approval gate, with contracts frozen at the Architecture and Design gates and a bounded repair loop from QA back to Build">
+  <title>The OMA phase pipeline</title>
+  <desc>Each phase dispatches role agents, writes durable artifacts to disk, and stops at a gate you approve. Contracts freeze at the gate of the phase that authored them. QA files failures back to Build in a bounded repair loop.</desc>
+
+  <defs>
+    <linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0E141B"/>
+      <stop offset="100%" stop-color="#0A0E13"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="460" rx="14" fill="url(#pbg)"/>
+
+  <text x="40" y="52" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#E6EDF3">The pipeline</text>
+  <text x="40" y="78" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" fill="#7D91A3">Every phase ends at a gate. Nothing advances without you.</text>
+
+  <!-- track -->
+  <line x1="80" y1="180" x2="1112" y2="180" stroke="#22303C" stroke-width="2"/>
+  <line x1="80" y1="180" x2="1104" y2="180" stroke="#D97757" stroke-width="2" stroke-opacity="0.5"/>
+  <path d="M1104 173 L1120 180 L1104 187 Z" fill="#D97757"/>
+
+  <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" text-anchor="middle">
+
+    <!-- 01 Discovery -->
+    <g transform="translate(184, 180)">
+      <circle r="13" fill="#0E141B" stroke="#D97757" stroke-width="2.5"/>
+      <circle r="4.5" fill="#D97757"/>
+      <text y="-46" font-size="12" letter-spacing="1.4" fill="#5D7183" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">01</text>
+      <text y="-24" font-size="16" font-weight="650" fill="#E6EDF3">Discovery</text>
+      <text y="48" font-size="13" fill="#8FA3B4">PM</text>
+      <text y="70" font-size="12" fill="#5D7183">PRD · REQ-### ids</text>
+      <text y="88" font-size="12" fill="#5D7183">scope · personas</text>
+    </g>
+
+    <!-- 02 Architecture -->
+    <g transform="translate(370, 180)">
+      <circle r="13" fill="#0E141B" stroke="#D97757" stroke-width="2.5"/>
+      <circle r="4.5" fill="#D97757"/>
+      <text y="-46" font-size="12" letter-spacing="1.4" fill="#5D7183" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">02</text>
+      <text y="-24" font-size="16" font-weight="650" fill="#E6EDF3">Architecture</text>
+      <text y="48" font-size="13" fill="#8FA3B4">Architect</text>
+      <text y="70" font-size="12" fill="#5D7183">stack · data model</text>
+      <text y="88" font-size="12" fill="#5D7183">ADRs · api contract</text>
+      <g transform="translate(0, 122)">
+        <rect x="-74" y="-14" width="148" height="27" rx="13.5" fill="#3FA6A0" fill-opacity="0.12" stroke="#3FA6A0" stroke-opacity="0.4"/>
+        <text y="5" font-size="11.5" letter-spacing="0.5" fill="#8FD6D1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">FREEZE stack+model</text>
+      </g>
+    </g>
+
+    <!-- 03 Design -->
+    <g transform="translate(600, 180)">
+      <circle r="13" fill="#0E141B" stroke="#D97757" stroke-width="2.5"/>
+      <circle r="4.5" fill="#D97757"/>
+      <text y="-46" font-size="12" letter-spacing="1.4" fill="#5D7183" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">03</text>
+      <text y="-24" font-size="16" font-weight="650" fill="#E6EDF3">Design</text>
+      <text y="48" font-size="13" fill="#8FA3B4">UX Designer</text>
+      <text y="70" font-size="12" fill="#5D7183">runnable HTML mockups</text>
+      <text y="88" font-size="12" fill="#5D7183">tokens · motion spec</text>
+      <g transform="translate(0, 122)">
+        <rect x="-86" y="-14" width="172" height="27" rx="13.5" fill="#3FA6A0" fill-opacity="0.12" stroke="#3FA6A0" stroke-opacity="0.4"/>
+        <text y="5" font-size="11.5" letter-spacing="0.5" fill="#8FD6D1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">FREEZE api+tokens+motion</text>
+      </g>
+    </g>
+
+    <!-- 04 Build -->
+    <g transform="translate(830, 180)">
+      <circle r="13" fill="#0E141B" stroke="#D97757" stroke-width="2.5"/>
+      <circle r="4.5" fill="#D97757"/>
+      <text y="-46" font-size="12" letter-spacing="1.4" fill="#5D7183" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">04</text>
+      <text y="-24" font-size="16" font-weight="650" fill="#E6EDF3">Build</text>
+      <text y="48" font-size="13" fill="#8FA3B4">Frontend + Backend</text>
+      <text y="70" font-size="12" fill="#5D7183">parallel, separate territory</text>
+      <text y="88" font-size="12" fill="#5D7183">every task cites a REQ</text>
+    </g>
+
+    <!-- 05 QA -->
+    <g transform="translate(1040, 180)">
+      <circle r="13" fill="#0E141B" stroke="#3FA6A0" stroke-width="2.5"/>
+      <circle r="4.5" fill="#3FA6A0"/>
+      <text y="-46" font-size="12" letter-spacing="1.4" fill="#5D7183" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">05</text>
+      <text y="-24" font-size="16" font-weight="650" fill="#E6EDF3">QA</text>
+      <text y="48" font-size="13" fill="#8FA3B4">QA Engineer</text>
+      <text y="70" font-size="12" fill="#5D7183">runs real commands</text>
+      <text y="88" font-size="12" fill="#5D7183">files failures back</text>
+    </g>
+  </g>
+
+  <!-- QA repair loop: QA -> Build, routed below the labels -->
+  <path d="M1040 290 C 1040 340, 990 348, 935 348 C 880 348, 830 340, 830 296" fill="none" stroke="#3FA6A0" stroke-width="1.8" stroke-dasharray="5 5" stroke-opacity="0.8"/>
+  <path d="M823 300 L830 284 L837 300 Z" fill="#3FA6A0"/>
+  <text x="935" y="372" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" fill="#6E8797">repair loop · bounded · evidence required</text>
+
+  <!-- legend -->
+  <g transform="translate(40, 420)" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5">
+    <circle cx="7" cy="-4" r="6" fill="#0E141B" stroke="#D97757" stroke-width="2"/>
+    <text x="24" y="0" fill="#7D91A3">= human approval gate — you run /oma:gate approve or reject</text>
+    <rect x="470" y="-13" width="13" height="13" rx="4" fill="#3FA6A0" fill-opacity="0.15" stroke="#3FA6A0" stroke-opacity="0.45"/>
+    <text x="494" y="0" fill="#7D91A3">= contract frozen — a hook physically blocks edits from here on</text>
+  </g>
+</svg>

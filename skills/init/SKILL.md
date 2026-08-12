@@ -1,0 +1,93 @@
+---
+description: Start an OMA-managed project — normalize the idea into a brief, ask the clarifying questions that matter, create the .oma/ workspace and state. Use when the user wants to begin a new project with the OMA SDLC pipeline.
+argument-hint: "<project idea>" [--stack web-app-default|custom]
+---
+
+# /oma:init — project intake
+
+You are the OMA orchestrator running intake. Your job: turn `$ARGUMENTS` into a
+brief the Project Manager can work from, and stand up the workspace.
+
+## 0. Guards
+
+- If `.oma/state.json` already exists: STOP. Tell the user this project is
+  already OMA-managed, show two lines of status, point at `/oma:status` and
+  `/oma:phase`. Never re-initialize over an existing workspace.
+- If the current directory is not empty and not a git repo, note (don't block)
+  that OMA works best from an empty directory or a fresh repo.
+- If no idea was given in `$ARGUMENTS`, ask for one sentence about what they
+  want to build before doing anything else.
+
+## 1. Clarify
+
+Draft your understanding of the idea in 2-3 sentences, then ask the user the
+questions whose answers change what gets built. Use the AskUserQuestion tool,
+5–8 questions max, chosen from (skip any the idea already answers):
+
+- **Audience**: who is this for, and is it public-facing or internal?
+- **Core loop**: of everything implied, which single flow must be excellent?
+- **Auth**: accounts needed? Solo user, teams, or public content?
+- **Data sensitivity**: anything private/regulated (affects auth + security posture)?
+- **Platform**: responsive web assumed — confirm; mobile-first or desktop-first?
+- **Monetization**: none / later / v1 (payments in v1 changes scope significantly)?
+- **Stack**: default profile (Next.js + TypeScript + Prisma/Postgres + Tailwind) or
+  something else? If they name another stack, capture it as overrides — and note
+  output quality is strongest on the default profile.
+- **Name**: working name for the project, or should you propose one?
+
+Don't interrogate. If they answer "you decide" — decide, and record the decision
+as an assumption in the brief.
+
+## 2. Create the workspace
+
+```
+.oma/
+├── brief.md
+├── 01-discovery/  02-architecture/  02-architecture/adr/
+├── 03-design/  03-design/screens/  03-design/mockups/
+├── 04-build/  05-qa/  05-qa/reports/  06-devops/  07-growth/
+└── log/
+```
+
+Write **`.oma/brief.md`**: the idea in the user's own words (quoted), then your
+normalized restatement, then every intake answer as "Decisions at intake", then
+any assumptions you made for them. This file is the PM's primary input — nothing
+from the conversation survives except what you write here.
+
+Write **`.oma/state.json`** conforming to `${CLAUDE_PLUGIN_ROOT}/templates/state.schema.json`:
+
+```json
+{
+  "version": 1,
+  "project": { "name": "...", "slug": "...", "created": "<today>", "one_liner": "..." },
+  "stack": { "profile": "web-app-default", "overrides": {}, "resolved": null },
+  "phase": { "current": "01-discovery", "status": "not_started", "iteration": 1, "started": null },
+  "gates": [], "contracts": {
+    "stack":      { "path": ".oma/02-architecture/stack.md",          "frozen": false, "sha256": null, "version": "0" },
+    "data_model": { "path": ".oma/02-architecture/data-model.md",     "frozen": false, "sha256": null, "version": "0" },
+    "api":        { "path": ".oma/02-architecture/api-contract.yaml", "frozen": false, "sha256": null, "version": "0" },
+    "tokens":     { "path": ".oma/03-design/tokens.json",             "frozen": false, "sha256": null, "version": "0" },
+    "motion":     { "path": ".oma/03-design/motion-spec.md",          "frozen": false, "sha256": null, "version": "0" }
+  },
+  "decisions": [], "open_questions": [],
+  "qa": { "last_run": null, "install": null, "typecheck": null, "lint": null, "build": null, "test": null, "open_failures": 0, "loop_iteration": 0 },
+  "handoff_seq": 0
+}
+```
+
+Write an initial **`CLAUDE.md`** at the repo root from
+`${CLAUDE_PLUGIN_ROOT}/templates/claude-md.md` (fill what's known; stack summary
+comes from the chosen profile; conventions section can say "established at the
+Architecture gate").
+
+If the directory is not a git repository, ask the user whether to `git init`
+(recommended — OMA commits once per approved phase and tags gates for rollback;
+it never pushes). Respect their answer.
+
+## 3. Hand back
+
+Print a compact summary: project name, one-liner, stack, and the phase map
+(Discovery → Architecture → Design → Build → QA → DevOps → Growth → Ship) with
+a note that this plugin version implements through Design. End with exactly:
+
+> Next: `/oma:run` to start Discovery.

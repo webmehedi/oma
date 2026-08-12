@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oma-tasks",
+  "title": "OMA build backlog",
+  "description": "Lives at .oma/04-build/tasks.json. Written by the PM (initial breakdown), QA (failure tasks), and the orchestrator (status reconciliation). Build agents NEVER write this file directly during parallel work — they report tasks_completed in their handoff and the orchestrator reconciles, because two agents writing one file concurrently corrupts it.",
+  "type": "object",
+  "required": ["version", "next_id", "tasks"],
+  "properties": {
+    "version": { "const": 1 },
+    "next_id": {
+      "type": "integer",
+      "description": "Next numeric id to assign. Task ids are permanent — never renumber, never reuse."
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "req", "title", "owner", "status", "acceptance", "opened_by"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^T-[0-9]{3}$" },
+          "req": {
+            "type": "string",
+            "pattern": "^REQ-[0-9]{3}$",
+            "description": "The requirement this serves. A task with no REQ is scope creep and gets rejected."
+          },
+          "title": { "type": "string", "maxLength": 140 },
+          "owner": {
+            "enum": ["oma-frontend", "oma-backend", "oma-qa", "oma-devops", "user"]
+          },
+          "status": {
+            "enum": ["todo", "in_progress", "done", "blocked", "wontfix"]
+          },
+          "stage": {
+            "enum": ["foundation", "feature", "fix"],
+            "description": "foundation = sequential scaffold work; feature = parallel-safe; fix = QA-filed repair."
+          },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^T-[0-9]{3}$" }
+          },
+          "acceptance": {
+            "type": "string",
+            "description": "The command or check that proves this done. 'npm run typecheck passes' / 'GET /api/invoices returns the contract envelope' / 'screen matches mockups/invoices.html incl. all 5 states'. Never 'works correctly'."
+          },
+          "opened_by": { "type": "string" },
+          "evidence": {
+            "type": ["string", "null"],
+            "description": "For fix tasks: pointer into a QA report or commands.jsonl line that shows the failure. For done tasks: what proved completion."
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

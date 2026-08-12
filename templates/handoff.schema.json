@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oma-handoff",
+  "title": "OMA handoff record",
+  "description": "One line of .oma/log/handoffs.jsonl. Appending exactly one of these is every agent's final act — it is the entire inter-agent communication mechanism.",
+  "type": "object",
+  "required": ["seq", "ts", "from", "phase", "to", "summary", "produced", "consumed"],
+  "properties": {
+    "seq": { "type": "integer", "minimum": 1 },
+    "ts": { "type": "string", "description": "ISO 8601 UTC" },
+    "from": { "type": "string", "pattern": "^oma-[a-z-]+$" },
+    "phase": { "type": "string" },
+    "to": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Agent names (or 'user') that must read this before their next dispatch."
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 600,
+      "description": "What happened, in 1-3 sentences. Facts, not adjectives."
+    },
+    "produced": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths created or modified."
+    },
+    "consumed": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths read as authoritative input."
+    },
+    "tasks_completed": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^T-[0-9]{3}$" }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Things assumed rather than confirmed. Surfaced at the gate."
+    },
+    "blocked_on": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["for", "text", "blocking"],
+        "properties": {
+          "id": { "type": "string" },
+          "for": { "type": "string" },
+          "text": { "type": "string" },
+          "blocking": { "type": "boolean" }
+        }
+      }
+    },
+    "contract_changes": {
+      "type": "array",
+      "description": "Requested changes to FROZEN contracts. Never edit a frozen contract directly — record the request here and stop.",
+      "items": {
+        "type": "object",
+        "required": ["contract", "change", "reason"],
+        "properties": {
+          "contract": { "enum": ["stack", "data_model", "api", "tokens", "motion"] },
+          "change": { "type": "string" },
+          "reason": { "type": "string" },
+          "impact": { "type": "string" }
+        }
+      }
+    }
+  }
+}

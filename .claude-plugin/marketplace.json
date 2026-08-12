@@ -1,0 +1,19 @@
+{
+  "name": "oma",
+  "description": "OMA — One Man Army. A phase-gated SDLC team of specialist agents for Claude Code.",
+  "owner": {
+    "name": "S M Mehedi Hasan",
+    "url": "https://github.com/webmehedi"
+  },
+  "plugins": [
+    {
+      "name": "oma",
+      "displayName": "OMA — One Man Army",
+      "description": "Give it a project idea; it runs Discovery → Architecture → Design → Build → QA → DevOps → Growth with role-specialized agents, stopping at a gate after every phase for your approval. Produces a working repository plus the PRD, API contract, design system, runnable HTML mockups, tests and launch material a real team would have written.",
+      "source": "./",
+      "category": "development",
+      "tags": ["sdlc", "agents", "orchestration", "mockups"],
+      "strict": true
+    }
+  ]
+}

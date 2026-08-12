@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "oma-state",
+  "title": "OMA project state",
+  "description": "Single source of truth for an OMA-managed project. Lives at .oma/state.json. Only OMA skills write it; agents and users read it.",
+  "type": "object",
+  "required": ["version", "project", "stack", "phase", "gates", "contracts", "handoff_seq"],
+  "properties": {
+    "version": { "const": 1 },
+    "project": {
+      "type": "object",
+      "required": ["name", "slug", "created", "one_liner"],
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "created": { "type": "string", "format": "date" },
+        "one_liner": { "type": "string", "maxLength": 200 }
+      }
+    },
+    "stack": {
+      "type": "object",
+      "required": ["profile"],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "description": "Name of a profile in the plugin's stacks/ directory, or 'custom'."
+        },
+        "overrides": {
+          "type": "object",
+          "description": "User-requested deviations from the profile, e.g. {\"db\": \"sqlite\"}."
+        },
+        "resolved": {
+          "type": ["string", "null"],
+          "description": "Path to the authored stack.md once Architecture has run."
+        }
+      }
+    },
+    "phase": {
+      "type": "object",
+      "required": ["current", "status"],
+      "properties": {
+        "current": {
+          "enum": ["01-discovery", "02-architecture", "03-design", "04-build", "05-qa", "06-devops", "07-growth", "08-ship"]
+        },
+        "status": {
+          "enum": ["not_started", "in_progress", "awaiting_gate", "approved", "blocked"]
+        },
+        "iteration": { "type": "integer", "minimum": 1 },
+        "started": { "type": ["string", "null"] }
+      }
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["phase", "status", "at"],
+        "properties": {
+          "phase": { "type": "string" },
+          "status": { "enum": ["approved", "rejected", "invalidated"] },
+          "at": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "description": "Keys: stack, data_model (frozen at the Architecture gate); api, tokens, motion (frozen at the Design gate). Each freezes at the gate of the phase that authored it — except api, which is authored at Architecture but freezes at Design so UX can still bend it.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path", "frozen"],
+        "properties": {
+          "path": { "type": "string" },
+          "frozen": { "type": "boolean" },
+          "sha256": { "type": ["string", "null"] },
+          "version": { "type": "string" }
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "question", "answer", "by", "at"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^D-[0-9]{3}$" },
+          "question": { "type": "string" },
+          "answer": { "type": "string" },
+          "by": { "type": "string" },
+          "at": { "type": "string" },
+          "adr": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "from", "for", "text", "blocking"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^Q-[0-9]{3}$" },
+          "from": { "type": "string" },
+          "for": { "type": "string", "description": "'user' or an agent name" },
+          "text": { "type": "string" },
+          "blocking": { "type": "boolean" }
+        }
+      }
+    },
+    "qa": {
+      "type": "object",
+      "properties": {
+        "last_run": { "type": ["string", "null"] },
+        "install": { "enum": ["pass", "fail", "warn", null] },
+        "typecheck": { "enum": ["pass", "fail", "warn", null] },
+        "lint": { "enum": ["pass", "fail", "warn", null] },
+        "build": { "enum": ["pass", "fail", "warn", null] },
+        "test": { "enum": ["pass", "fail", "warn", null] },
+        "open_failures": { "type": "integer" },
+        "loop_iteration": { "type": "integer" }
+      }
+    },
+    "handoff_seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Sequence number of the most recent handoff record. Orchestrator-owned."
+    }
+  }
+}
