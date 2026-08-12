@@ -11,7 +11,7 @@ Architect, UX Designer, Frontend, Backend, QA, Security, DevOps, SEO, Marketer,
 Social — and stops at a gate after every phase for your approval.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.1-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.6.0-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://docs.claude.com/en/docs/claude-code/plugins)
 [![Agents](https://img.shields.io/badge/agents-12%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-3FA6A0.svg?style=flat-square)](#-contributing)
@@ -28,10 +28,11 @@ OMA is an open-source **Claude Code plugin** that turns a one-line project idea
 into a working, tested repository — the way a real software team would build it,
 not the way a single chat session flails at it.
 
-It is a **multi-agent SDLC pipeline**: eleven role-specialized AI agents —
+It is a **multi-agent SDLC pipeline**: twelve role-specialized AI agents —
 project manager, software architect, UI/UX designer, frontend developer,
 backend developer, QA engineer, security engineer, DevOps engineer, SEO
-specialist, marketer and social media manager — that coordinate through
+specialist, marketer, social media manager and a codebase archaeologist for
+existing projects — that coordinate through
 **durable on-disk state** instead of conversation. Sessions are disposable.
 The project isn't.
 
@@ -48,13 +49,12 @@ Three things make it different from "ask an AI to build my app":
    "the tests pass" is checkable against reality — and in validation, that's
    exactly what caught nine tasks marked done against tests that never existed.
 
-> **Status: M5.** All eight phases are implemented and proven end-to-end on a
-> real project — one idea taken from a blank directory to a tagged `oma/ship`
-> with a tested application, a security review, CI, a deploy runbook and launch
-> material. **v0.5.0 adds brownfield mode:** point OMA at a repository that
-> already exists and it reads the code first. See
-> [Proven on a real project](#-proven-on-a-real-project) and
-> [Existing codebases](#-existing-codebases).
+> **Status: complete through M6.** All eight phases are implemented and proven
+> end-to-end on a real project — one idea taken from a blank directory to a
+> tagged `oma/ship` with a tested application, a security review, CI, a deploy
+> runbook and launch material. Brownfield mode reads an existing repository
+> first, and is validated against ground truth. You can
+> [read a real run](#-see-a-real-run) before installing anything.
 
 ## 📑 Table of contents
 
@@ -65,6 +65,7 @@ Three things make it different from "ask an AI to build my app":
 - ⚡ [Commands](#-commands)
 - 🔧 [How it works](#-how-it-works)
 - 🗿 [Existing codebases](#-existing-codebases)
+- 📂 [See a real run](#-see-a-real-run)
 - 🧪 [Proven on a real project](#-proven-on-a-real-project)
 - 🧱 [The default stack](#-the-default-stack)
 - 📋 [Requirements](#-requirements)
@@ -242,7 +243,7 @@ flowchart TD
 - **Blocking questions halt the pipeline.** When an agent hits a decision only
   you can make, the system stops and asks rather than building on a guess.
 
-Full architecture and rationale: **[DESIGN.md](DESIGN.md)**.
+Full architecture and rationale: **[DESIGN.md](DESIGN.md)**. Something gone wrong: **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**. What changed and when: **[CHANGELOG.md](CHANGELOG.md)**.
 
 ## 🗿 Existing codebases
 
@@ -285,6 +286,24 @@ Three rules make it safe to point at code you care about:
    documents both patterns and asks you which is canonical rather than picking —
    an agent that rewrites working code in its preferred idiom is worse than
    useless.
+
+## 📂 See a real run
+
+Before you install anything, read the output of a real one:
+**[`examples/ledgerly/`](examples/ledgerly)** — the complete `.oma/` workspace
+from a full eight-phase run. 74 files, 28 agent dispatches, one sentence in, a
+tested application out.
+
+It includes the parts that went wrong: the QA report that caught nine tasks
+marked done against tests that never existed, a frozen contract changed properly
+through `/oma:change` with the ADR behind it, and a ship report that lists every
+known issue and accepted security finding by name.
+
+The mockups in it are runnable:
+
+```bash
+python3 -m http.server 4173 -d examples/ledgerly/.oma/03-design/mockups
+```
 
 ## 🧪 Proven on a real project
 
@@ -442,7 +461,7 @@ place to catch a misunderstanding and the most expensive one to miss.
 | **M3** | Build (Frontend ∥ Backend) + QA verification loop + `/oma:change` + `/oma:task` | ✅ shipped · validated end-to-end |
 | **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` + the deploy guard | ✅ shipped · validated end-to-end² |
 | **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | ✅ shipped · validated³ |
-| **M6** | Distribution — worked example in-repo, troubleshooting guide | 🚧 partial⁴ |
+| **M6** | Distribution — worked example in-repo, troubleshooting guide, hook self-test | ✅ shipped |
 
 ³ Validated against **ground truth**: the Ledgerly application was stripped of
 every artifact OMA wrote — `.oma/`, `CLAUDE.md`, the README, git history, and
@@ -464,10 +483,10 @@ until `db:generate` is run by hand. The ship report had called the project green
 because it was green in a working directory that already had the generated code.
 The audit guard is separately tested at the script level (10 cases).
 
-⁴ The README and the marketplace listing are done. Still missing: a **worked
-example** committed to this repo — so you can read a real filled-in `.oma/`
-before installing anything — and a **troubleshooting guide** for the failure
-modes that are normal at this scale.
+⁴ All four items are in: this README, the marketplace listing,
+[`examples/ledgerly/`](examples/ledgerly) — the complete 74-file `.oma/` from a
+real run — and [TROUBLESHOOTING.md](TROUBLESHOOTING.md), built from failures
+actually hit during validation rather than imagined ones.
 
 ² Phases 06–08 were run end-to-end on the same real project as M3, taking it
 from a green build to a tagged `oma/ship`. The security agent ran real
@@ -505,8 +524,15 @@ types other than a CRUD web app, which is where the sharpest edges hide.
 Before opening a PR:
 
 ```bash
-claude plugin validate .
+claude plugin validate .   # manifests
+bash scripts/selftest.sh   # all six hooks, 41 behavioral cases
 ```
+
+The self-test matters more than it looks. Every hook **fails open** — any
+internal error exits 0 and allows the action, so a hook bug can never block a
+user's work. The cost of that choice is that a broken hook is completely silent.
+`selftest.sh` feeds each hook the payload the harness would send and asserts the
+decision, so silence gets caught here instead of in someone's project.
 
 Read [DESIGN.md](DESIGN.md) first if you're changing anything about state,
 handoffs, or the freeze mechanism — those three carry the invariants everything

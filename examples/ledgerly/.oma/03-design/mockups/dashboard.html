@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Ledgerly</title>
+<link rel="stylesheet" href="tokens.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/motion@12/dist/motion.js" defer></script>
+<script src="motion.js" defer></script>
+<style>
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-4); margin-bottom: var(--space-6); }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 639px) {
+    .hide-sm { display: none; }
+    .table td, .table th { padding-left: var(--space-3); padding-right: var(--space-3); }
+  }
+</style>
+</head>
+<body data-screen-state="ideal">
+
+<header class="app-nav no-print">
+  <div class="nav-inner">
+    <a class="brand" href="dashboard.html"><span class="brand-mark">●</span> Ledgerly</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="dashboard.html" aria-current="page">Dashboard</a>
+      <a href="invoices.html">Invoices</a>
+      <a href="clients.html">Clients</a>
+    </nav>
+    <div class="nav-user">
+      <span class="hide-sm">maya@example.com</span>
+      <a class="btn btn-ghost btn-sm" href="auth.html">Sign out</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-header">
+    <h1 class="t-title">Dashboard</h1>
+    <a class="btn btn-primary" href="invoice-form.html">New invoice</a>
+  </div>
+
+  <!-- IDEAL -->
+  <section data-state-panel="ideal">
+    <div class="stat-grid">
+      <div class="card stat-card" data-hero-step>
+        <span class="t-micro stat-label tone-warn">Outstanding</span>
+        <span class="t-display stat-amount">$6,100.00</span>
+        <span class="t-small text-muted">4 unpaid invoices</span>
+      </div>
+      <div class="card stat-card" data-hero-step>
+        <span class="t-micro stat-label tone-accent">Paid in August</span>
+        <span class="t-display stat-amount">$3,530.00</span>
+        <span class="t-small text-muted">3 invoices paid this month</span>
+      </div>
+    </div>
+
+    <div class="card" data-hero-step>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding: var(--space-5) var(--space-6) var(--space-3);">
+        <h2 class="t-heading">Recent invoices</h2>
+        <a class="t-small" href="invoices.html">All invoices →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Invoice</th>
+              <th scope="col">Client</th>
+              <th scope="col" class="hide-sm">Issued</th>
+              <th scope="col" class="num">Total</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody data-stagger>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0007">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0007</a></td>
+              <td>Acme Design Co</td>
+              <td class="text-muted hide-sm">Aug 12, 2026</td>
+              <td class="num">$1,875.00</td>
+              <td><span class="badge badge-unpaid">Unpaid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark paid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0006">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0006</a></td>
+              <td>Hearthstone Yoga</td>
+              <td class="text-muted hide-sm">Aug 11, 2026</td>
+              <td class="num">$360.00</td>
+              <td><span class="badge badge-unpaid">Unpaid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark paid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0002">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0002</a></td>
+              <td>Acme Design Co</td>
+              <td class="text-muted hide-sm">Aug 10, 2026</td>
+              <td class="num">$2,625.00</td>
+              <td><span class="badge badge-unpaid">Unpaid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark paid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0005">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0005</a></td>
+              <td>Northwind Press</td>
+              <td class="text-muted hide-sm">Aug 5, 2026</td>
+              <td class="num">$2,150.00</td>
+              <td><span class="badge badge-paid">Paid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark unpaid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0004">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0004</a></td>
+              <td>Hearthstone Yoga</td>
+              <td class="text-muted hide-sm">Aug 4, 2026</td>
+              <td class="num">$480.00</td>
+              <td><span class="badge badge-paid">Paid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark unpaid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0003">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0003</a></td>
+              <td>Northwind Press</td>
+              <td class="text-muted hide-sm">Aug 3, 2026</td>
+              <td class="num">$1,240.00</td>
+              <td><span class="badge badge-unpaid">Unpaid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark paid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0001">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0001</a></td>
+              <td>Acme Design Co</td>
+              <td class="text-muted hide-sm">Aug 1, 2026</td>
+              <td class="num">$900.00</td>
+              <td><span class="badge badge-paid">Paid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark unpaid</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="t-small text-muted" style="margin-top: var(--space-3);">Totals refresh on next dashboard load after a status change.</p>
+  </section>
+
+  <!-- LOADING -->
+  <section data-state-panel="loading" hidden aria-busy="true" aria-label="Loading dashboard">
+    <div class="stat-grid">
+      <div class="card stat-card"><span class="skeleton" style="width: var(--space-16); height: var(--type-micro-line);"></span><span class="skeleton" style="width: 60%; height: var(--type-display-line);"></span></div>
+      <div class="card stat-card"><span class="skeleton" style="width: var(--space-16); height: var(--type-micro-line);"></span><span class="skeleton" style="width: 60%; height: var(--type-display-line);"></span></div>
+    </div>
+    <div class="card card-pad" style="display: flex; flex-direction: column; gap: var(--space-4);">
+      <span class="skeleton" style="width: 30%; height: var(--type-heading-line);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+    </div>
+  </section>
+
+  <!-- EMPTY -->
+  <section data-state-panel="empty" hidden>
+    <div class="stat-grid">
+      <div class="card stat-card">
+        <span class="t-micro stat-label tone-warn">Outstanding</span>
+        <span class="t-display stat-amount">$0.00</span>
+      </div>
+      <div class="card stat-card">
+        <span class="t-micro stat-label tone-accent">Paid in August</span>
+        <span class="t-display stat-amount">$0.00</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="empty-state">
+        <svg class="empty-glyph" width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <rect x="8" y="4" width="32" height="40" rx="3" stroke="currentColor" stroke-width="2"/>
+          <path d="M15 14h18M15 22h18M15 30h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <h2 class="t-heading">No invoices yet</h2>
+        <p class="text-muted" style="max-width: 40ch;">Create your first invoice and Ledgerly starts tracking who owes you.</p>
+        <a class="btn btn-primary" href="invoice-form.html">Create your first invoice</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ERROR -->
+  <section data-state-panel="error" hidden>
+    <div class="banner banner-danger" role="alert">
+      <span class="banner-msg">Couldn’t load your dashboard.</span>
+      <button class="btn btn-secondary btn-sm" type="button">Retry</button>
+    </div>
+  </section>
+
+  <!-- PARTIAL: stats loaded, recent list failed -->
+  <section data-state-panel="partial" hidden>
+    <div class="stat-grid">
+      <div class="card stat-card">
+        <span class="t-micro stat-label tone-warn">Outstanding</span>
+        <span class="t-display stat-amount">$6,100.00</span>
+        <span class="t-small text-muted">4 unpaid invoices</span>
+      </div>
+      <div class="card stat-card">
+        <span class="t-micro stat-label tone-accent">Paid in August</span>
+        <span class="t-display stat-amount">$3,530.00</span>
+        <span class="t-small text-muted">3 invoices paid this month</span>
+      </div>
+    </div>
+    <div class="card card-pad">
+      <h2 class="t-heading" style="margin-bottom: var(--space-4);">Recent invoices</h2>
+      <div class="banner banner-danger" role="alert">
+        <span class="banner-msg">Couldn’t load recent invoices.</span>
+        <button class="btn btn-secondary btn-sm" type="button">Retry</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<p id="status-live" class="sr-only" aria-live="polite"></p>
+
+<div class="state-switcher no-print" role="group" aria-label="Mockup state switcher">
+  <span class="sw-label t-micro">State</span>
+  <button type="button" data-set-state="loading">Loading</button>
+  <button type="button" data-set-state="empty">Empty</button>
+  <button type="button" data-set-state="ideal">Ideal</button>
+  <button type="button" data-set-state="error">Error</button>
+  <button type="button" data-set-state="partial">Partial</button>
+</div>
+
+</body>
+</html>

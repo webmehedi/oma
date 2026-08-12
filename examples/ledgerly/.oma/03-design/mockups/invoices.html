@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoices — Ledgerly</title>
+<link rel="stylesheet" href="tokens.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/motion@12/dist/motion.js" defer></script>
+<script src="motion.js" defer></script>
+<style>
+  @media (max-width: 639px) {
+    .hide-sm { display: none; }
+    .table td, .table th { padding-left: var(--space-3); padding-right: var(--space-3); }
+    .filter-tabs { display: flex; width: 100%; }
+    .filter-tab { flex: 1; }
+  }
+</style>
+</head>
+<body data-screen-state="ideal">
+
+<header class="app-nav no-print">
+  <div class="nav-inner">
+    <a class="brand" href="dashboard.html"><span class="brand-mark">●</span> Ledgerly</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="invoices.html" aria-current="page">Invoices</a>
+      <a href="clients.html">Clients</a>
+    </nav>
+    <div class="nav-user">
+      <span class="hide-sm">maya@example.com</span>
+      <a class="btn btn-ghost btn-sm" href="auth.html">Sign out</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-header">
+    <h1 class="t-title">Invoices</h1>
+    <a class="btn btn-primary" href="invoice-form.html">New invoice</a>
+  </div>
+
+  <div style="display:flex; align-items:center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4);">
+    <div class="filter-tabs" role="tablist" aria-label="Filter by status">
+      <button class="filter-tab" role="tab" aria-selected="true" data-filter="all">All</button>
+      <button class="filter-tab" role="tab" aria-selected="false" data-filter="unpaid">Unpaid</button>
+      <button class="filter-tab" role="tab" aria-selected="false" data-filter="paid">Paid</button>
+    </div>
+    <span class="t-small text-muted t-mono" id="url-hint">/invoices</span>
+  </div>
+
+  <!-- IDEAL (also hosts the client-side filter demo) -->
+  <section data-state-panel="ideal partial">
+    <div data-state-panel="partial" hidden style="margin-bottom: var(--space-4);">
+      <div class="banner banner-danger" role="alert">
+        <span class="banner-msg">Couldn’t update INV-0003. Try again.</span>
+        <button class="btn btn-secondary btn-sm" type="button">Retry</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Invoice</th>
+              <th scope="col">Client</th>
+              <th scope="col" class="hide-sm">Issued</th>
+              <th scope="col" class="num">Total</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody data-stagger id="invoice-rows">
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0007" data-status="unpaid">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0007</a></td>
+              <td>Acme Design Co</td>
+              <td class="text-muted hide-sm">Aug 12, 2026</td>
+              <td class="num">$1,875.00</td>
+              <td><span class="badge badge-unpaid">Unpaid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark paid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0006" data-status="unpaid">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0006</a></td>
+              <td>Hearthstone Yoga</td>
+              <td class="text-muted hide-sm">Aug 11, 2026</td>
+              <td class="num">$360.00</td>
+              <td><span class="badge badge-unpaid">Unpaid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark paid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0002" data-status="unpaid">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0002</a></td>
+              <td>Acme Design Co</td>
+              <td class="text-muted hide-sm">Aug 10, 2026</td>
+              <td class="num">$2,625.00</td>
+              <td><span class="badge badge-unpaid">Unpaid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark paid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0005" data-status="paid">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0005</a></td>
+              <td>Northwind Press</td>
+              <td class="text-muted hide-sm">Aug 5, 2026</td>
+              <td class="num">$2,150.00</td>
+              <td><span class="badge badge-paid">Paid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark unpaid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0004" data-status="paid">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0004</a></td>
+              <td>Hearthstone Yoga</td>
+              <td class="text-muted hide-sm">Aug 4, 2026</td>
+              <td class="num">$480.00</td>
+              <td><span class="badge badge-paid">Paid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark unpaid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0003" data-status="unpaid">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0003</a></td>
+              <td>Northwind Press</td>
+              <td class="text-muted hide-sm">Aug 3, 2026</td>
+              <td class="num">$1,240.00</td>
+              <td><span class="badge badge-unpaid">Unpaid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark paid</button></td>
+            </tr>
+            <tr class="row-hover" data-invoice-row data-invoice-label="INV-0001" data-status="paid">
+              <td class="mono"><a class="row-link" href="invoice-detail.html">INV-0001</a></td>
+              <td>Acme Design Co</td>
+              <td class="text-muted hide-sm">Aug 1, 2026</td>
+              <td class="num">$900.00</td>
+              <td><span class="badge badge-paid">Paid</span></td>
+              <td><button class="btn btn-secondary btn-sm" type="button" data-toggle-paid>Mark unpaid</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p id="filtered-empty" hidden class="text-muted" style="padding: var(--space-8); text-align: center;">No paid invoices yet.</p>
+    </div>
+    <p class="t-small text-muted" style="margin-top: var(--space-3);" id="result-count" aria-live="polite">7 invoices · page 1 of 1</p>
+  </section>
+
+  <!-- LOADING -->
+  <section data-state-panel="loading" hidden aria-busy="true" aria-label="Loading invoices">
+    <div class="card card-pad" style="display: flex; flex-direction: column; gap: var(--space-4);">
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--space-10);"></span>
+    </div>
+  </section>
+
+  <!-- EMPTY (account has zero invoices) -->
+  <section data-state-panel="empty" hidden>
+    <div class="card">
+      <div class="empty-state">
+        <svg class="empty-glyph" width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <rect x="8" y="4" width="32" height="40" rx="3" stroke="currentColor" stroke-width="2"/>
+          <path d="M15 14h18M15 22h18M15 30h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <h2 class="t-heading">No invoices yet</h2>
+        <p class="text-muted" style="max-width: 40ch;">Your first invoice takes about a minute: pick a client, add line items, done.</p>
+        <a class="btn btn-primary" href="invoice-form.html">Create your first invoice</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ERROR -->
+  <section data-state-panel="error" hidden>
+    <div class="banner banner-danger" role="alert">
+      <span class="banner-msg">Couldn’t load invoices.</span>
+      <button class="btn btn-secondary btn-sm" type="button">Retry</button>
+    </div>
+  </section>
+</main>
+
+<p id="status-live" class="sr-only" aria-live="polite"></p>
+
+<div class="state-switcher no-print" role="group" aria-label="Mockup state switcher">
+  <span class="sw-label t-micro">State</span>
+  <button type="button" data-set-state="loading">Loading</button>
+  <button type="button" data-set-state="empty">Empty</button>
+  <button type="button" data-set-state="ideal">Ideal</button>
+  <button type="button" data-set-state="error">Error</button>
+  <button type="button" data-set-state="partial">Partial</button>
+</div>
+
+<script>
+// Filter tabs demo: narrows rows, mirrors ?status= in the URL hint (REQ-007).
+document.addEventListener('DOMContentLoaded', function () {
+  var tabs = document.querySelectorAll('.filter-tab[data-filter]');
+  var urlHint = document.getElementById('url-hint');
+  var count = document.getElementById('result-count');
+  var filteredEmpty = document.getElementById('filtered-empty');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t === tab)); });
+      var f = tab.getAttribute('data-filter');
+      urlHint.textContent = f === 'all' ? '/invoices' : '/invoices?status=' + f;
+      var rows = document.querySelectorAll('#invoice-rows [data-invoice-row]');
+      var visible = 0;
+      rows.forEach(function (row) {
+        var show = f === 'all' || row.getAttribute('data-status') === f;
+        row.hidden = !show;
+        if (show) { visible++; window.LedgerlyMotion.enterFast(row); }
+      });
+      filteredEmpty.hidden = visible !== 0;
+      var label = f === 'all' ? 'invoices' : f + ' invoices';
+      count.textContent = visible + ' ' + label + ' · page 1 of 1';
+    });
+  });
+});
+</script>
+
+</body>
+</html>

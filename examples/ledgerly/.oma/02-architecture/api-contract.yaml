@@ -1,0 +1,988 @@
+openapi: 3.1.0
+info:
+  title: Ledgerly API
+  version: "1.0.0"
+  description: |
+    Contract for Ledgerly v1. Frontend builds mocks from the examples herein
+    verbatim; Backend implements exactly this surface. Changes route through
+    /oma:change after the Design gate.
+
+    ## Envelope
+    Every response body is an envelope:
+    - Success: `{ "data": ... }`
+    - Failure: `{ "error": { "code", "message", "details"? } }`
+
+    ## Error code registry (complete — no ad-hoc codes)
+    | Code | HTTP | Meaning |
+    |---|---|---|
+    | VALIDATION_FAILED   | 400 | Body/query failed Zod validation; `details` maps field -> message |
+    | INVALID_CREDENTIALS | 401 | Sign-in email/password mismatch (REQ-001) |
+    | UNAUTHENTICATED     | 401 | Missing/expired session cookie |
+    | NOT_FOUND           | 404 | Resource absent OR owned by another user (never distinguish — REQ-001 isolation) |
+    | EMAIL_TAKEN         | 409 | Signup email already registered |
+    | CLIENT_HAS_INVOICES | 409 | Client delete blocked by referential integrity (REQ-002) |
+    | INVOICE_PAID_LOCKED | 409 | Edit/delete attempted on a paid invoice (REQ-008) |
+    | INTERNAL            | 500 | Unexpected server error; message is generic, never a stack trace (REQ-009) |
+
+    ## Auth
+    Cookie session: `ledgerly_session`, httpOnly, SameSite=Lax, Secure in prod.
+    Opaque 256-bit token; server-side session row, 30-day sliding expiry
+    (ADR-002). Signup and signin SET the cookie; signout clears it. All
+    endpoints except signup/signin require it and return UNAUTHENTICATED (401)
+    without it.
+
+    ## Conventions
+    - Money: integer cents in fields suffixed `Cents`. Display formatting is
+      the client's job (USD).
+    - Quantity: JSON number with at most 3 decimal places (multipleOf 0.001).
+    - Date-only values (issueDate, dueDate, paidDate): `YYYY-MM-DD` strings.
+    - Timestamps: RFC 3339 UTC.
+    - Invoice numbers: integer in `number`; display form `INV-0001`
+      (zero-padded to 4, grows naturally past 9999) in `displayNumber`.
+    - Pagination (invoice list only): `page` (1-based) + `pageSize` (fixed 25)
+      query params; response `meta: { page, pageSize, total }`. Other lists
+      are unpaginated in v1 (PRD: not required under 100 rows).
+servers:
+  - url: /api
+tags:
+  - name: auth
+  - name: clients
+  - name: invoices
+  - name: dashboard
+
+security:
+  - sessionCookie: []
+
+paths:
+  /auth/signup:
+    post:
+      tags: [auth]
+      operationId: signup
+      security: []
+      summary: Create account and start a session (REQ-001)
+      description: "REQ-001. Creates the user, sets the session cookie, returns the user. New user lands on the dashboard (client redirects on success)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CredentialsInput" }
+            example: { email: "maya@example.com", password: "correct-horse-battery" }
+      responses:
+        "201":
+          description: "Account created; response sets the ledgerly_session cookie"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/User" }
+              example:
+                data: { id: "u_ck2x9a4qw0000", email: "maya@example.com", createdAt: "2026-08-12T09:15:00Z" }
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error: { code: "EMAIL_TAKEN", message: "An account with this email already exists." }
+
+  /auth/signin:
+    post:
+      tags: [auth]
+      operationId: signin
+      security: []
+      summary: Sign in (REQ-001)
+      description: "REQ-001. Verifies credentials, sets the session cookie. Wrong password returns INVALID_CREDENTIALS with no session created."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CredentialsInput" }
+            example: { email: "maya@example.com", password: "correct-horse-battery" }
+      responses:
+        "200":
+          description: "Signed in; response sets the ledgerly_session cookie"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/User" }
+              example:
+                data: { id: "u_ck2x9a4qw0000", email: "maya@example.com", createdAt: "2026-08-12T09:15:00Z" }
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401":
+          description: Bad email or password (same code for both — no account enumeration)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error: { code: "INVALID_CREDENTIALS", message: "Email or password is incorrect." }
+
+  /auth/signout:
+    post:
+      tags: [auth]
+      operationId: signout
+      summary: End the session (REQ-001)
+      description: "REQ-001. Deletes the server-side session and clears the cookie. Idempotent."
+      responses:
+        "200":
+          description: Signed out
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [signedOut]
+                    properties:
+                      signedOut: { type: boolean, const: true }
+              example: { data: { signedOut: true } }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      operationId: getMe
+      summary: Current user for session checks (REQ-001)
+      description: "REQ-001. Returns the signed-in user; UNAUTHENTICATED otherwise. Frontend uses this to gate app pages and redirect to sign-in."
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/User" }
+              example:
+                data: { id: "u_ck2x9a4qw0000", email: "maya@example.com", createdAt: "2026-08-12T09:15:00Z" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /clients:
+    get:
+      tags: [clients]
+      operationId: listClients
+      summary: List all clients with invoice counts (REQ-002)
+      description: "REQ-002. All clients for the account, name-ascending, each with its invoice count. Unpaginated in v1."
+      responses:
+        "200":
+          description: Client list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Client" }
+              example:
+                data:
+                  - id: "c_ck2xa11aa0001"
+                    name: "Acme Design Co"
+                    email: "billing@acmedesign.example"
+                    address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+                    invoiceCount: 3
+                    createdAt: "2026-08-01T10:00:00Z"
+                    updatedAt: "2026-08-10T16:20:00Z"
+                  - id: "c_ck2xa22bb0002"
+                    name: "Bluebird Cafe"
+                    email: null
+                    address: null
+                    invoiceCount: 0
+                    createdAt: "2026-08-05T08:30:00Z"
+                    updatedAt: "2026-08-05T08:30:00Z"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      tags: [clients]
+      operationId: createClient
+      summary: Create a client (REQ-002)
+      description: "REQ-002. Name required (non-empty after trim); email and address optional. Empty name -> VALIDATION_FAILED."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClientInput" }
+            example:
+              name: "Acme Design Co"
+              email: "billing@acmedesign.example"
+              address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Client" }
+              example:
+                data:
+                  id: "c_ck2xa11aa0001"
+                  name: "Acme Design Co"
+                  email: "billing@acmedesign.example"
+                  address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+                  invoiceCount: 0
+                  createdAt: "2026-08-12T09:20:00Z"
+                  updatedAt: "2026-08-12T09:20:00Z"
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /clients/{clientId}:
+    parameters:
+      - $ref: "#/components/parameters/ClientId"
+    get:
+      tags: [clients]
+      operationId: getClient
+      summary: Fetch one client (REQ-002, REQ-009)
+      description: "REQ-002, REQ-009. Unknown or foreign id -> NOT_FOUND (drives the friendly not-found page)."
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Client" }
+              example:
+                data:
+                  id: "c_ck2xa11aa0001"
+                  name: "Acme Design Co"
+                  email: "billing@acmedesign.example"
+                  address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+                  invoiceCount: 3
+                  createdAt: "2026-08-01T10:00:00Z"
+                  updatedAt: "2026-08-10T16:20:00Z"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [clients]
+      operationId: updateClient
+      summary: Edit a client (REQ-002)
+      description: "REQ-002. Partial update; same validation as create. Changes reflect on existing invoices' send-ready views (live reference, no snapshot)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClientPatchInput" }
+            example: { email: "accounts@acmedesign.example" }
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Client" }
+              example:
+                data:
+                  id: "c_ck2xa11aa0001"
+                  name: "Acme Design Co"
+                  email: "accounts@acmedesign.example"
+                  address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+                  invoiceCount: 3
+                  createdAt: "2026-08-01T10:00:00Z"
+                  updatedAt: "2026-08-12T11:05:00Z"
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [clients]
+      operationId: deleteClient
+      summary: Delete a zero-invoice client (REQ-002)
+      description: "REQ-002. Hard delete, allowed only when invoiceCount is 0; otherwise CLIENT_HAS_INVOICES."
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [deleted]
+                    properties:
+                      deleted: { type: boolean, const: true }
+              example: { data: { deleted: true } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Client still referenced by invoices
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error: { code: "CLIENT_HAS_INVOICES", message: "This client has invoices and cannot be deleted." }
+
+  /invoices:
+    get:
+      tags: [invoices]
+      operationId: listInvoices
+      summary: List invoices, newest first, filterable by status (REQ-007)
+      description: "REQ-007. Sorted by issueDate desc then number desc. `status` filter mirrors the URL state on the list page. Page size fixed at 25."
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Omit for all
+          schema: { type: string, enum: [unpaid, paid] }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+      responses:
+        "200":
+          description: Invoice page
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/InvoiceSummary" }
+                  meta: { $ref: "#/components/schemas/PageMeta" }
+              example:
+                data:
+                  - id: "i_ck2xb77cc0003"
+                    number: 2
+                    displayNumber: "INV-0002"
+                    clientId: "c_ck2xa11aa0001"
+                    clientName: "Acme Design Co"
+                    status: "unpaid"
+                    issueDate: "2026-08-10"
+                    dueDate: "2026-09-09"
+                    paidDate: null
+                    totalCents: 262500
+                  - id: "i_ck2xb66dd0002"
+                    number: 1
+                    displayNumber: "INV-0001"
+                    clientId: "c_ck2xa11aa0001"
+                    clientName: "Acme Design Co"
+                    status: "paid"
+                    issueDate: "2026-08-01"
+                    dueDate: null
+                    paidDate: "2026-08-08"
+                    totalCents: 90000
+                meta: { page: 1, pageSize: 25, total: 2 }
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      tags: [invoices]
+      operationId: createInvoice
+      summary: Create an invoice with line items (REQ-003)
+      description: "REQ-003. Requires an owned clientId and 1+ line items. Server assigns the next sequential number, computes amountCents and totalCents (client-sent totals are ignored). Status starts unpaid. issueDate defaults to today (UTC) when omitted."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvoiceInput" }
+            example:
+              clientId: "c_ck2xa11aa0001"
+              issueDate: "2026-08-10"
+              dueDate: "2026-09-09"
+              lineItems:
+                - { description: "UX audit", quantity: 1, unitPriceCents: 150000 }
+                - { description: "Design sprint facilitation (hours)", quantity: 7.5, unitPriceCents: 15000 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Invoice" }
+              example:
+                data:
+                  id: "i_ck2xb77cc0003"
+                  number: 2
+                  displayNumber: "INV-0002"
+                  status: "unpaid"
+                  issueDate: "2026-08-10"
+                  dueDate: "2026-09-09"
+                  paidDate: null
+                  totalCents: 262500
+                  client:
+                    id: "c_ck2xa11aa0001"
+                    name: "Acme Design Co"
+                    email: "billing@acmedesign.example"
+                    address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+                  lineItems:
+                    - { id: "li_ck2xb88ee0001", position: 0, description: "UX audit", quantity: 1, unitPriceCents: 150000, amountCents: 150000 }
+                    - { id: "li_ck2xb99ff0002", position: 1, description: "Design sprint facilitation (hours)", quantity: 7.5, unitPriceCents: 15000, amountCents: 112500 }
+                  createdAt: "2026-08-10T14:00:00Z"
+                  updatedAt: "2026-08-10T14:00:00Z"
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404":
+          description: clientId unknown or not owned by this account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error: { code: "NOT_FOUND", message: "Client not found." }
+
+  /invoices/{invoiceId}:
+    parameters:
+      - $ref: "#/components/parameters/InvoiceId"
+    get:
+      tags: [invoices]
+      operationId: getInvoice
+      summary: Full invoice for detail / send-ready view (REQ-004)
+      description: "REQ-004, REQ-009. Everything the send-ready view renders: number, dates, embedded client details, line items, total, status. Unknown/foreign id -> NOT_FOUND."
+      responses:
+        "200":
+          description: Invoice
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Invoice" }
+              example:
+                data:
+                  id: "i_ck2xb77cc0003"
+                  number: 2
+                  displayNumber: "INV-0002"
+                  status: "unpaid"
+                  issueDate: "2026-08-10"
+                  dueDate: "2026-09-09"
+                  paidDate: null
+                  totalCents: 262500
+                  client:
+                    id: "c_ck2xa11aa0001"
+                    name: "Acme Design Co"
+                    email: "billing@acmedesign.example"
+                    address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+                  lineItems:
+                    - { id: "li_ck2xb88ee0001", position: 0, description: "UX audit", quantity: 1, unitPriceCents: 150000, amountCents: 150000 }
+                    - { id: "li_ck2xb99ff0002", position: 1, description: "Design sprint facilitation (hours)", quantity: 7.5, unitPriceCents: 15000, amountCents: 112500 }
+                  createdAt: "2026-08-10T14:00:00Z"
+                  updatedAt: "2026-08-10T14:00:00Z"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [invoices]
+      operationId: updateInvoice
+      summary: Edit an UNPAID invoice (REQ-008)
+      description: "REQ-008. Same validation as create. lineItems, when present, REPLACES the full set (no per-line patching). Totals recomputed server-side. Paid invoice -> INVOICE_PAID_LOCKED."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvoicePatchInput" }
+            example:
+              dueDate: "2026-09-15"
+              lineItems:
+                - { description: "UX audit", quantity: 1, unitPriceCents: 150000 }
+                - { description: "Design sprint facilitation (hours)", quantity: 9, unitPriceCents: 15000 }
+      responses:
+        "200":
+          description: Updated invoice (full aggregate)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Invoice" }
+              example:
+                data:
+                  id: "i_ck2xb77cc0003"
+                  number: 2
+                  displayNumber: "INV-0002"
+                  status: "unpaid"
+                  issueDate: "2026-08-10"
+                  dueDate: "2026-09-15"
+                  paidDate: null
+                  totalCents: 285000
+                  client:
+                    id: "c_ck2xa11aa0001"
+                    name: "Acme Design Co"
+                    email: "billing@acmedesign.example"
+                    address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+                  lineItems:
+                    - { id: "li_ck2xc10gg0003", position: 0, description: "UX audit", quantity: 1, unitPriceCents: 150000, amountCents: 150000 }
+                    - { id: "li_ck2xc11hh0004", position: 1, description: "Design sprint facilitation (hours)", quantity: 9, unitPriceCents: 15000, amountCents: 135000 }
+                  createdAt: "2026-08-10T14:00:00Z"
+                  updatedAt: "2026-08-12T10:30:00Z"
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/PaidLocked" }
+    delete:
+      tags: [invoices]
+      operationId: deleteInvoice
+      summary: Delete an UNPAID invoice (REQ-008)
+      description: "REQ-008. Hard delete; line items cascade; the invoice number is never reused. Paid invoice -> INVOICE_PAID_LOCKED. Confirmation is a client-side step."
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [deleted]
+                    properties:
+                      deleted: { type: boolean, const: true }
+              example: { data: { deleted: true } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/PaidLocked" }
+
+  /invoices/{invoiceId}/status:
+    parameters:
+      - $ref: "#/components/parameters/InvoiceId"
+    post:
+      tags: [invoices]
+      operationId: setInvoiceStatus
+      summary: Toggle paid/unpaid (REQ-005)
+      description: "REQ-005. status=paid sets paidDate (body value or today UTC); status=unpaid clears it. Idempotent: setting the current status again succeeds and returns the invoice unchanged (paid->paid does not move paidDate). One-click from list and detail; response carries the summary for immediate UI update without reload."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StatusInput" }
+            example: { status: "paid", paidDate: "2026-08-12" }
+      responses:
+        "200":
+          description: New status applied
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/InvoiceSummary" }
+              example:
+                data:
+                  id: "i_ck2xb77cc0003"
+                  number: 2
+                  displayNumber: "INV-0002"
+                  clientId: "c_ck2xa11aa0001"
+                  clientName: "Acme Design Co"
+                  status: "paid"
+                  issueDate: "2026-08-10"
+                  dueDate: "2026-09-09"
+                  paidDate: "2026-08-12"
+                  totalCents: 262500
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /dashboard:
+    get:
+      tags: [dashboard]
+      operationId: getDashboard
+      summary: Outstanding totals + recent invoices (REQ-006)
+      description: "REQ-006. outstandingCents = sum of unpaid invoice totals; paidThisMonthCents = sum of totals of invoices with paidDate in the current UTC calendar month; recentInvoices = 10 most recent by issueDate desc. invoiceCount=0 drives the empty-state CTA (REQ-009)."
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Dashboard" }
+              example:
+                data:
+                  outstandingCents: 262500
+                  paidThisMonthCents: 90000
+                  invoiceCount: 2
+                  recentInvoices:
+                    - id: "i_ck2xb77cc0003"
+                      number: 2
+                      displayNumber: "INV-0002"
+                      clientId: "c_ck2xa11aa0001"
+                      clientName: "Acme Design Co"
+                      status: "unpaid"
+                      issueDate: "2026-08-10"
+                      dueDate: "2026-09-09"
+                      paidDate: null
+                      totalCents: 262500
+                    - id: "i_ck2xb66dd0002"
+                      number: 1
+                      displayNumber: "INV-0001"
+                      clientId: "c_ck2xa11aa0001"
+                      clientName: "Acme Design Co"
+                      status: "paid"
+                      issueDate: "2026-08-01"
+                      dueDate: null
+                      paidDate: "2026-08-08"
+                      totalCents: 90000
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: ledgerly_session
+      description: Opaque session token (ADR-002). httpOnly; JS never reads it.
+
+  parameters:
+    ClientId:
+      name: clientId
+      in: path
+      required: true
+      schema: { type: string }
+      example: "c_ck2xa11aa0001"
+    InvoiceId:
+      name: invoiceId
+      in: path
+      required: true
+      schema: { type: string }
+      example: "i_ck2xb77cc0003"
+
+  responses:
+    ValidationFailed:
+      description: Request failed Zod validation
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+          example:
+            error:
+              code: "VALIDATION_FAILED"
+              message: "Some fields are invalid."
+              details: { name: "Name is required." }
+    Unauthenticated:
+      description: No valid session
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+          example:
+            error: { code: "UNAUTHENTICATED", message: "Sign in to continue." }
+    NotFound:
+      description: Resource absent or owned by another account
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+          example:
+            error: { code: "NOT_FOUND", message: "Not found." }
+    PaidLocked:
+      description: Operation forbidden on a paid invoice
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+          example:
+            error: { code: "INVOICE_PAID_LOCKED", message: "Paid invoices are locked. Revert to unpaid to edit." }
+
+  schemas:
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_FAILED
+                - INVALID_CREDENTIALS
+                - UNAUTHENTICATED
+                - NOT_FOUND
+                - EMAIL_TAKEN
+                - CLIENT_HAS_INVOICES
+                - INVOICE_PAID_LOCKED
+                - INTERNAL
+            message:
+              type: string
+              description: Human-readable, safe to render inline (REQ-009)
+            details:
+              type: object
+              additionalProperties: { type: string }
+              description: Present only for VALIDATION_FAILED; field -> message
+
+    CredentialsInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, description: Lowercased server-side }
+        password: { type: string, minLength: 8, maxLength: 200 }
+      example: { email: "maya@example.com", password: "correct-horse-battery" }
+
+    User:
+      type: object
+      required: [id, email, createdAt]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        createdAt: { type: string, format: date-time }
+      example: { id: "u_ck2x9a4qw0000", email: "maya@example.com", createdAt: "2026-08-12T09:15:00Z" }
+
+    ClientInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200, description: Trimmed; empty rejected (REQ-002) }
+        email:
+          oneOf: [{ type: string, format: email, maxLength: 320 }, { type: "null" }]
+        address:
+          oneOf: [{ type: string, maxLength: 1000, description: Free-form; newlines preserved on the send-ready view }, { type: "null" }]
+      example: { name: "Acme Design Co", email: "billing@acmedesign.example", address: "400 Market St\nSuite 12\nSan Francisco, CA 94111" }
+
+    ClientPatchInput:
+      type: object
+      description: Any subset of ClientInput fields; provided fields fully replace old values (null clears an optional field)
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        email:
+          oneOf: [{ type: string, format: email, maxLength: 320 }, { type: "null" }]
+        address:
+          oneOf: [{ type: string, maxLength: 1000 }, { type: "null" }]
+      example: { email: "accounts@acmedesign.example" }
+
+    Client:
+      type: object
+      required: [id, name, email, address, invoiceCount, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email:
+          oneOf: [{ type: string }, { type: "null" }]
+        address:
+          oneOf: [{ type: string }, { type: "null" }]
+        invoiceCount: { type: integer, minimum: 0, description: Drives the list column (REQ-002) and delete affordance }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      example:
+        id: "c_ck2xa11aa0001"
+        name: "Acme Design Co"
+        email: "billing@acmedesign.example"
+        address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+        invoiceCount: 3
+        createdAt: "2026-08-01T10:00:00Z"
+        updatedAt: "2026-08-10T16:20:00Z"
+
+    ClientRef:
+      type: object
+      description: Client details embedded in the invoice aggregate for the send-ready view (REQ-004). Live reference — reflects current client fields.
+      required: [id, name, email, address]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email:
+          oneOf: [{ type: string }, { type: "null" }]
+        address:
+          oneOf: [{ type: string }, { type: "null" }]
+      example:
+        id: "c_ck2xa11aa0001"
+        name: "Acme Design Co"
+        email: "billing@acmedesign.example"
+        address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+
+    LineItemInput:
+      type: object
+      required: [description, quantity, unitPriceCents]
+      properties:
+        description: { type: string, minLength: 1, maxLength: 500 }
+        quantity:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000000
+          multipleOf: 0.001
+          description: Up to 3 decimal places (e.g. 7.5 hours); stored as integer thousandths (ADR-003)
+        unitPriceCents:
+          type: integer
+          minimum: 0
+          maximum: 100000000
+          description: Integer cents; negatives rejected (REQ-003)
+      example: { description: "Design sprint facilitation (hours)", quantity: 7.5, unitPriceCents: 15000 }
+
+    LineItem:
+      type: object
+      required: [id, position, description, quantity, unitPriceCents, amountCents]
+      properties:
+        id: { type: string }
+        position: { type: integer, minimum: 0, description: Display order, 0-based }
+        description: { type: string }
+        quantity: { type: number, description: Decimal form of stored thousandths }
+        unitPriceCents: { type: integer }
+        amountCents: { type: integer, description: "round(quantity x unitPrice), server-computed" }
+      example: { id: "li_ck2xb99ff0002", position: 1, description: "Design sprint facilitation (hours)", quantity: 7.5, unitPriceCents: 15000, amountCents: 112500 }
+
+    InvoiceInput:
+      type: object
+      required: [clientId, lineItems]
+      properties:
+        clientId: { type: string, description: Must belong to the account, else NOT_FOUND }
+        issueDate: { type: string, format: date, description: Defaults to today (UTC) when omitted (REQ-003) }
+        dueDate:
+          oneOf: [{ type: string, format: date }, { type: "null" }]
+        lineItems:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: "#/components/schemas/LineItemInput" }
+          description: Order given is the stored position order. Zero items -> VALIDATION_FAILED (REQ-003).
+      example:
+        clientId: "c_ck2xa11aa0001"
+        issueDate: "2026-08-10"
+        dueDate: "2026-09-09"
+        lineItems:
+          - { description: "UX audit", quantity: 1, unitPriceCents: 150000 }
+          - { description: "Design sprint facilitation (hours)", quantity: 7.5, unitPriceCents: 15000 }
+
+    InvoicePatchInput:
+      type: object
+      description: Unpaid invoices only (REQ-008). Any subset; lineItems when present REPLACES the entire set.
+      minProperties: 1
+      properties:
+        clientId: { type: string }
+        issueDate: { type: string, format: date }
+        dueDate:
+          oneOf: [{ type: string, format: date }, { type: "null" }]
+        lineItems:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: "#/components/schemas/LineItemInput" }
+      example:
+        dueDate: "2026-09-15"
+        lineItems:
+          - { description: "UX audit", quantity: 1, unitPriceCents: 150000 }
+
+    StatusInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [paid, unpaid] }
+        paidDate:
+          type: string
+          format: date
+          description: Only meaningful with status=paid; defaults to today (UTC). Ignored for status=unpaid.
+      example: { status: "paid", paidDate: "2026-08-12" }
+
+    InvoiceSummary:
+      type: object
+      description: Row shape for lists, dashboard recents, and status-toggle responses (REQ-005, REQ-006, REQ-007)
+      required: [id, number, displayNumber, clientId, clientName, status, issueDate, dueDate, paidDate, totalCents]
+      properties:
+        id: { type: string }
+        number: { type: integer, minimum: 1 }
+        displayNumber: { type: string, pattern: "^INV-[0-9]{4,}$", description: Zero-padded to 4 digits minimum }
+        clientId: { type: string }
+        clientName: { type: string }
+        status: { type: string, enum: [unpaid, paid] }
+        issueDate: { type: string, format: date }
+        dueDate:
+          oneOf: [{ type: string, format: date }, { type: "null" }]
+        paidDate:
+          oneOf: [{ type: string, format: date }, { type: "null" }]
+        totalCents: { type: integer, minimum: 0 }
+      example:
+        id: "i_ck2xb77cc0003"
+        number: 2
+        displayNumber: "INV-0002"
+        clientId: "c_ck2xa11aa0001"
+        clientName: "Acme Design Co"
+        status: "unpaid"
+        issueDate: "2026-08-10"
+        dueDate: "2026-09-09"
+        paidDate: null
+        totalCents: 262500
+
+    Invoice:
+      type: object
+      description: Full aggregate for detail / send-ready view (REQ-004)
+      required: [id, number, displayNumber, status, issueDate, dueDate, paidDate, totalCents, client, lineItems, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        number: { type: integer, minimum: 1 }
+        displayNumber: { type: string, pattern: "^INV-[0-9]{4,}$" }
+        status: { type: string, enum: [unpaid, paid] }
+        issueDate: { type: string, format: date }
+        dueDate:
+          oneOf: [{ type: string, format: date }, { type: "null" }]
+        paidDate:
+          oneOf: [{ type: string, format: date }, { type: "null" }]
+        totalCents: { type: integer, minimum: 0 }
+        client: { $ref: "#/components/schemas/ClientRef" }
+        lineItems:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/LineItem" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      example:
+        id: "i_ck2xb77cc0003"
+        number: 2
+        displayNumber: "INV-0002"
+        status: "unpaid"
+        issueDate: "2026-08-10"
+        dueDate: "2026-09-09"
+        paidDate: null
+        totalCents: 262500
+        client:
+          id: "c_ck2xa11aa0001"
+          name: "Acme Design Co"
+          email: "billing@acmedesign.example"
+          address: "400 Market St\nSuite 12\nSan Francisco, CA 94111"
+        lineItems:
+          - { id: "li_ck2xb88ee0001", position: 0, description: "UX audit", quantity: 1, unitPriceCents: 150000, amountCents: 150000 }
+          - { id: "li_ck2xb99ff0002", position: 1, description: "Design sprint facilitation (hours)", quantity: 7.5, unitPriceCents: 15000, amountCents: 112500 }
+        createdAt: "2026-08-10T14:00:00Z"
+        updatedAt: "2026-08-10T14:00:00Z"
+
+    PageMeta:
+      type: object
+      required: [page, pageSize, total]
+      properties:
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, const: 25 }
+        total: { type: integer, minimum: 0, description: Total rows matching the filter }
+      example: { page: 1, pageSize: 25, total: 2 }
+
+    Dashboard:
+      type: object
+      required: [outstandingCents, paidThisMonthCents, invoiceCount, recentInvoices]
+      properties:
+        outstandingCents: { type: integer, minimum: 0, description: Sum of unpaid invoice totals (REQ-006 primary figure) }
+        paidThisMonthCents: { type: integer, minimum: 0, description: Sum of totals with paidDate in current UTC calendar month }
+        invoiceCount: { type: integer, minimum: 0, description: Account-wide count; 0 drives the empty-state CTA (REQ-009) }
+        recentInvoices:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/InvoiceSummary" }
+          description: 10 most recent by issueDate desc, then number desc
+      example:
+        outstandingCents: 262500
+        paidThisMonthCents: 90000
+        invoiceCount: 2
+        recentInvoices:
+          - id: "i_ck2xb77cc0003"
+            number: 2
+            displayNumber: "INV-0002"
+            clientId: "c_ck2xa11aa0001"
+            clientName: "Acme Design Co"
+            status: "unpaid"
+            issueDate: "2026-08-10"
+            dueDate: "2026-09-09"
+            paidDate: null
+            totalCents: 262500

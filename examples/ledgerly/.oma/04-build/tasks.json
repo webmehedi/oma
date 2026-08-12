@@ -1,0 +1,434 @@
+{
+  "version": 1,
+  "next_id": 30,
+  "tasks": [
+    {
+      "id": "T-001",
+      "req": "REQ-001",
+      "title": "Scaffold Next.js 16.3 app with pinned deps, TS strict, Tailwind 4, lint/format/scripts",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "foundation",
+      "depends_on": [],
+      "acceptance": "npm ci && npm run typecheck && npm run lint && npm run build all pass on the empty scaffold; package.json pins the exact versions in .oma/02-architecture/stack.md with no ^/~ ranges; src/app, src/components, src/server/services, src/shared/schemas, prisma/, e2e/ exist per the directory contract.",
+      "opened_by": "oma-project-manager",
+      "notes": "Foundation. Includes .gitignore (data/, .env), prettier + eslint-config-next config, and scripts: dev, build, start, typecheck, lint, test.",
+      "evidence": "handoff seq 5 (foundation); typecheck+build 0"
+    },
+    {
+      "id": "T-002",
+      "req": "REQ-003",
+      "title": "Prisma schema for User/Session/Client/Invoice/InvoiceLineItem + migration + db.ts adapter + env.ts",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "foundation",
+      "depends_on": [
+        "T-001"
+      ],
+      "acceptance": "npx prisma migrate dev creates ./data/ledgerly.db and npx prisma validate passes; a vitest smoke test creates a user, client, invoice and two line items through src/server/db.ts and reads them back; grep shows no $queryRaw/$executeRaw and no AUTOINCREMENT in src/.",
+      "opened_by": "oma-project-manager",
+      "notes": "Exactly the 5 entities, fields, indexes and constraints in .oma/02-architecture/data-model.md. cuid2 app-generated ids, integer cents / integer thousandths quantities (ADR-003), UTC DateTime, status as constrained string. WAL pragma only inside db.ts. env.ts validates DATABASE_URL with Zod and refuses to start half-configured.",
+      "evidence": "handoff seq 5 (foundation); typecheck+build 0"
+    },
+    {
+      "id": "T-003",
+      "req": "REQ-009",
+      "title": "Shared Zod schemas, DTO types, response envelope and error-code registry in src/shared",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "foundation",
+      "depends_on": [
+        "T-001",
+        "T-002"
+      ],
+      "acceptance": "vitest unit tests assert every request/response schema in .oma/02-architecture/api-contract.yaml parses its contract example and rejects one malformed variant, and that the exported error-code union is exactly the 8 codes in the contract's error registry; npm run typecheck passes.",
+      "opened_by": "oma-project-manager",
+      "notes": "Includes the ok()/err() envelope helpers every route handler uses, and the money/quantity integer coercion helpers. Frontend imports these types; it never imports from server/.",
+      "evidence": "handoff seq 5 (foundation); typecheck+build 0"
+    },
+    {
+      "id": "T-004",
+      "req": "REQ-001",
+      "title": "Auth service and endpoints: signup, signin, signout, me, session cookie, route guard",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-002",
+        "T-003"
+      ],
+      "acceptance": "vitest integration test: signup sets an httpOnly ledgerly_session cookie and GET /api/auth/me returns the user; wrong password returns 401 INVALID_CREDENTIALS with no session row; signout deletes the row and clears the cookie; a request with no cookie to a guarded route returns 401 UNAUTHENTICATED. Passwords are argon2id hashes (never plaintext) in the DB.",
+      "opened_by": "oma-project-manager",
+      "notes": "ADR-002: opaque 256-bit base64url token, Session row keyed by SHA-256 of the token, 30-day sliding expiry refreshed at most once/24h. Emails lowercased. One error code for bad email and bad password.",
+      "evidence": "handoff seq 6/7; typecheck+lint+build 0"
+    },
+    {
+      "id": "T-005",
+      "req": "REQ-002",
+      "title": "Client endpoints: list with invoice counts, create, get, update, delete-if-zero-invoices",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-003",
+        "T-004"
+      ],
+      "acceptance": "vitest integration test hits all five operations at /api/clients and /api/clients/{clientId} and matches the contract envelope; empty name returns 422 VALIDATION_FAILED; deleting a client that has invoices returns the contract's conflict code; another account's clientId returns 404 NOT_FOUND; list is sorted name-ascending with correct invoiceCount.",
+      "opened_by": "oma-project-manager",
+      "notes": "All Prisma access inside src/server/services/clients.ts. Every query scoped by session userId.",
+      "evidence": "handoff seq 6/7; typecheck+lint+build 0"
+    },
+    {
+      "id": "T-006",
+      "req": "REQ-003",
+      "title": "Invoice create and detail endpoints with sequential numbering and server-side totals",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-003",
+        "T-004",
+        "T-005"
+      ],
+      "acceptance": "vitest integration test: POST /api/invoices with a client and 3 line items returns INV-0001 then INV-0002 on the next create, with per-line amount and invoice total computed server-side in integer cents (round-half-up per line then sum); zero line items, missing client, and negative unitPrice each return 422 VALIDATION_FAILED; GET /api/invoices/{invoiceId} returns the full invoice with embedded client and line items per the contract.",
+      "opened_by": "oma-project-manager",
+      "notes": "Per-account sequential numbering per ADR-004; numbers are never reused. issueDate defaults to today (UTC), dueDate optional. Client is a live reference, not a snapshot.",
+      "evidence": "handoff seq 8/9; pipeline 0"
+    },
+    {
+      "id": "T-007",
+      "req": "REQ-007",
+      "title": "Invoice list endpoint: newest-first, status filter, fixed-25 pagination",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-006"
+      ],
+      "acceptance": "vitest integration test seeds 30 invoices: GET /api/invoices returns 25 items sorted issueDate desc then number desc with the contract's pagination metadata; ?status=unpaid and ?status=paid return only matching invoices; ?page=2 returns the remaining 5; an invalid status value returns 422 VALIDATION_FAILED.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 10/11; pipeline 0"
+    },
+    {
+      "id": "T-008",
+      "req": "REQ-008",
+      "title": "Invoice update and delete endpoints with the paid-invoice lock",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-006"
+      ],
+      "acceptance": "vitest integration test: PATCH /api/invoices/{invoiceId} on an unpaid invoice replaces line items and recomputes the total with creation-identical validation; PATCH and DELETE on a paid invoice both return INVOICE_PAID_LOCKED; DELETE on an unpaid invoice removes it with its line items and the next created invoice does not reuse its number.",
+      "opened_by": "oma-project-manager",
+      "notes": "ADR-005: hard delete, and the paid lock covers delete as well as edit.",
+      "evidence": "handoff seq 10/11; pipeline 0"
+    },
+    {
+      "id": "T-009",
+      "req": "REQ-005",
+      "title": "Invoice status toggle endpoint with paid-date handling",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-006"
+      ],
+      "acceptance": "vitest integration test: POST /api/invoices/{invoiceId}/status {\"status\":\"paid\"} sets status paid and paidDate to today (UTC); repeating the call is idempotent and does not move paidDate; setting \"unpaid\" clears paidDate; an unknown status value returns 422 VALIDATION_FAILED.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 8/9; pipeline 0"
+    },
+    {
+      "id": "T-010",
+      "req": "REQ-006",
+      "title": "Dashboard endpoint: outstanding total, paid-this-month total, 10 recent invoices",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-006",
+        "T-009"
+      ],
+      "acceptance": "vitest integration test seeds a known mix of paid and unpaid invoices across two months: GET /api/dashboard returns outstanding = sum of unpaid totals in cents, paidThisMonth = sum of invoices paid in the current UTC calendar month, and exactly the 10 most recent invoices by issue date with number, client, total and status; an account with no invoices returns zeroes and an empty list.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 12/13; pipeline 0"
+    },
+    {
+      "id": "T-011",
+      "req": "REQ-010",
+      "title": "Translate tokens.json into the Tailwind 4 theme and CSS custom properties (light + dark)",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-001"
+      ],
+      "acceptance": "Every color, spacing, radius, type-scale and shadow key in .oma/03-design/tokens.json resolves to a CSS custom property in src/app/globals.css with matching light and dark values, and a diff against .oma/03-design/mockups/tokens.css shows no missing or renamed token; grep finds no raw hex values in src/app or src/components outside globals.css; npm run build passes.",
+      "opened_by": "oma-project-manager",
+      "notes": "Frontend's first feature task. tokens.json is frozen (state.json contracts.tokens) \u2014 translate it, never edit it. Also wire the motion durations/easings from .oma/03-design/motion-spec.md and the prefers-reduced-motion guard.",
+      "evidence": "handoff seq 6/7; typecheck+lint+build 0"
+    },
+    {
+      "id": "T-012",
+      "req": "REQ-009",
+      "title": "AppShell, PageHeader and the shared component primitives from components.md",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-011"
+      ],
+      "acceptance": "src/components exports AppShell, PageHeader, Button, TextField/TextArea, SelectField, DateField, StatusBadge, StatusToggle, StatCard, DataTable, Pagination, FilterTabs, EmptyState, Banner, FieldError, ConfirmDialog and Skeleton with the props and variants in .oma/03-design/components.md; each renders identically to its instance in .oma/03-design/mockups/ (nav chrome vs dashboard.html, table vs invoices.html) including hover/focus/disabled states; npm run typecheck and npm run lint pass.",
+      "opened_by": "oma-project-manager",
+      "notes": "StateSwitcher is mockup-only \u2014 do not build it.",
+      "evidence": "handoff seq 6/7; typecheck+lint+build 0"
+    },
+    {
+      "id": "T-013",
+      "req": "REQ-001",
+      "title": "Auth screen: /signin and /signup with mode toggle, plus signed-out redirect",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-004",
+        "T-012"
+      ],
+      "acceptance": "Screen matches .oma/03-design/mockups/auth.html in both modes and all mocked states (idle, submitting, field error, server error); signup lands on /dashboard; a wrong password shows the inline error without navigating; visiting /dashboard, /clients or /invoices while signed out redirects to /signin.",
+      "opened_by": "oma-project-manager",
+      "notes": "One screen with a mode toggle per the designer's handoff, not two separate layouts.",
+      "evidence": "handoff seq 8/9; pipeline 0"
+    },
+    {
+      "id": "T-014",
+      "req": "REQ-006",
+      "title": "Dashboard screen: outstanding and paid-this-month StatCards plus recent-invoices table",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-010",
+        "T-012"
+      ],
+      "acceptance": "Screen matches .oma/03-design/mockups/dashboard.html in all five mocked states (loading, empty, populated, error, and the mark-paid moment); both StatCards show USD-formatted mono figures from GET /api/dashboard; recent rows link to /invoices/{id}; the empty state shows the CTA to /invoices/new.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 14; pipeline 0"
+    },
+    {
+      "id": "T-015",
+      "req": "REQ-007",
+      "title": "Invoice list screen with URL-persisted status filter, pagination and row status toggle",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-007",
+        "T-009",
+        "T-012"
+      ],
+      "acceptance": "Screen matches .oma/03-design/mockups/invoices.html in all five mocked states; the FilterTabs selection writes ?status=unpaid|paid and survives a page reload; ?page=N drives the fixed-25 pagination; toggling a row's status updates the badge in place without a full page reload; each row links to the invoice detail view.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 12/13; pipeline 0"
+    },
+    {
+      "id": "T-016",
+      "req": "REQ-003",
+      "title": "Invoice form screen at /invoices/new and /invoices/{id}/edit with live-computing LineItemEditor",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-005",
+        "T-006",
+        "T-008",
+        "T-012"
+      ],
+      "acceptance": "Screen matches .oma/03-design/mockups/invoice-form.html in both modes and all mocked states; line-item amount and invoice total recompute on every add, edit and remove without a save; saving with zero line items or no client shows inline validation and does not POST; issue date defaults to today and due date is optional; edit mode loads the existing invoice and saving recomputes the total; opening the edit route for a paid invoice shows the paid-lock message.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 12/13; pipeline 0"
+    },
+    {
+      "id": "T-017",
+      "req": "REQ-004",
+      "title": "Invoice detail / send-ready view with print stylesheet and status toggle",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-006",
+        "T-009",
+        "T-012"
+      ],
+      "acceptance": "Screen matches .oma/03-design/mockups/invoice-detail.html in all mocked states including the minimal-data variant; shows number, issue date, due date when set, client details, every line item with quantity/unit price/amount, the total and the paid/unpaid status; the print stylesheet hides all app navigation chrome so print preview yields one clean page; toggling status updates the badge and the paid date in place; edit and delete affordances are disabled with the reason shown when the invoice is paid.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 10/11; pipeline 0"
+    },
+    {
+      "id": "T-018",
+      "req": "REQ-002",
+      "title": "Clients screen with inline create/edit panel and invoice counts",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-005",
+        "T-012"
+      ],
+      "acceptance": "Screen matches .oma/03-design/mockups/clients.html in all five mocked states; the list shows every client with its invoice count; the inline panel creates and edits clients with email and address optional; an empty name shows an inline validation message and does not submit; delete is offered only for zero-invoice clients and is confirmed before it fires.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 8/9; pipeline 0"
+    },
+    {
+      "id": "T-019",
+      "req": "REQ-009",
+      "title": "Not-found page and app-wide error/empty state wiring",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-012",
+        "T-017",
+        "T-018"
+      ],
+      "acceptance": "Screen matches .oma/03-design/mockups/not-found.html; an unknown or other-account /invoices/{id} and /clients/{id} both render it with a link back to the relevant list; every failing API call surfaces the contract error message in a Banner or FieldError instead of a raw error screen or a silent failure; no unhandled promise rejections appear in the browser console during a full click-through of the app.",
+      "opened_by": "oma-project-manager",
+      "evidence": "handoff seq 14; pipeline 0"
+    },
+    {
+      "id": "T-020",
+      "req": "REQ-010",
+      "title": "Responsive pass across all screens at 375px and >=1024px",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "feature",
+      "depends_on": [
+        "T-014",
+        "T-015",
+        "T-016",
+        "T-017",
+        "T-018"
+      ],
+      "acceptance": "At a 375px viewport, dashboard, invoice list, clients, invoice detail and both form modes render with document.scrollWidth equal to the viewport width (no horizontal scrolling) and every primary action reachable without zoom; at 1280px the list pages render as full-width tables matching the desktop mockups, not a centered mobile column.",
+      "opened_by": "oma-project-manager",
+      "notes": "Desktop-first; mobile must be read/mark-paid competent, not pixel-perfect.",
+      "evidence": "handoff seq 15; pipeline 0"
+    },
+    {
+      "id": "T-021",
+      "req": "REQ-001",
+      "title": "Create the vitest unit/integration suite the build acceptance criteria already claim",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "`npm test` exits 0 having actually run tests (not 'No test files found'). At minimum the suite covers what T-002..T-010 acceptance named: db.ts round-trip; every contract schema parses its api-contract.yaml example and rejects a malformed variant; the exported error-code union is exactly the 8 registry codes; auth cookie/session/argon2 behaviour; client CRUD incl. CLIENT_HAS_INVOICES; invoice sequential numbering and server-side round-half-up cents; list pagination+filter; paid-lock on PATCH/DELETE; status idempotency and paidDate clearing; dashboard month-boundary arithmetic. Note: the contract maps VALIDATION_FAILED to 400, so assert 400 where those task texts say 422.",
+      "opened_by": "oma-qa",
+      "notes": "Not a new feature \u2014 this closes the gap between what was claimed and what is repeatable. The build agents proved these behaviours with curl against a dev server (disclosed honestly in handoffs seq 6/8/10/12) and QA re-proved them by curl this run, so the behaviour is believed correct; what is missing is the regression net. stack.md specifies CI as install -> typecheck -> lint -> test -> build, so `test` fails CI today. The e2e suite QA added covers three critical paths only and is deliberately not a substitute (see .oma/05-qa/test-plan.md).",
+      "evidence": "handoff seq 17/18 + orchestrator format pass; full pipeline 0"
+    },
+    {
+      "id": "T-022",
+      "req": "REQ-003",
+      "title": "Fix hydration mismatch: module-level draft counter drives data-li-key in LineItemEditor",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "Loading /invoices/new twice against `next dev` logs no React hydration-mismatch error in the browser console, and the DOM's data-li-key matches the row's React key on every load. Suggested fix: derive the key with React's useId/useState initializer (per component instance) instead of the module-scoped `draftSequence` in src/components/LineItemEditor.tsx:26-32, which is shared across requests on the server and restarts at 0 on the client.",
+      "opened_by": "oma-qa",
+      "notes": "Flagged by oma-frontend in handoff seq 15 as pre-existing and worth a ticket; QA confirmed it. Reproduces on the SECOND dev load (server counter has advanced, client's has not): React reports server li-1 vs client li-2 and states 'This won't be patched up'. Does NOT reproduce against the current production build because /invoices/new is statically prerendered, so the mismatch is latent rather than active \u2014 but data-li-key is used as a querySelector focus target at LineItemEditor.tsx:88, so a stale attribute silently breaks focus-after-add-row.",
+      "evidence": "handoff seq 17/18 + orchestrator format pass; full pipeline 0"
+    },
+    {
+      "id": "T-023",
+      "req": "REQ-009",
+      "title": "Replace raw Zod default text in VALIDATION_FAILED details for invoice status and page",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "GET /api/invoices?status=bogus, GET /api/invoices?page=0, GET /api/invoices?page=abc and POST /api/invoices/{id}/status {\"status\":\"bogus\"} each return 400 VALIDATION_FAILED whose details value is human-readable prose with no machine syntax (no 'expected one of', no escaped quotes, no 'NaN'), matching the authored style already used elsewhere (e.g. 'Description is required.', 'Enter a date as YYYY-MM-DD.').",
+      "opened_by": "oma-qa",
+      "notes": "Three messages leak Zod defaults: 'Invalid option: expected one of \"unpaid\"|\"paid\"' from invoiceStatusSchema (src/shared/schemas/common.ts:25) and 'Too small: expected number to be >=1' / 'Invalid input: expected number, received NaN' from the page param (src/shared/schemas/invoices.ts:127). Every other detail message in the codebase is authored prose, so this is an oversight, not a convention. REQ-009 requires human-readable inline messages and the contract describes details as field -> message safe to render. Low severity: the UI never submits these values, so they surface only on a hand-edited URL.",
+      "evidence": "handoff seq 17/18 + orchestrator format pass; full pipeline 0"
+    },
+    {
+      "id": "T-024",
+      "req": "REQ-010",
+      "title": "Run the deferred repo-wide Prettier pass (28 files fail format:check)",
+      "owner": "oma-frontend",
+      "status": "done",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "`npm run format:check` exits 0. `npm run typecheck`, `npm run lint`, `npm run build` and `npx playwright test` still exit 0 afterwards.",
+      "opened_by": "oma-qa",
+      "notes": "stack.md pins prettier as 'format, never argued with' and ships a format:check script, but 28 files have never been formatted: CLAUDE.md, package.json, 6 files under src/app, 13 under src/components, src/server/env.ts, 3 under src/server/services, and 3 under src/shared. Deferred deliberately by oma-frontend in handoff seq 15 to keep the T-020 diff readable; this is that dedicated pass. Owner is a routing guess \u2014 most files are frontend territory, but src/server/* and src/shared/* are backend's; `npm run format` fixes all of it in one command, so whoever picks it up should just run it. Not in the CI chain stack.md specifies, hence low priority.",
+      "evidence": "handoff seq 17/18 + orchestrator format pass; full pipeline 0"
+    },
+    {
+      "id": "T-025",
+      "req": "REQ-009",
+      "title": "Author the four remaining raw-Zod validation messages (quantity/unitPriceCents maxima, idSchema, email max)",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "Every one of these five probes returns 400 VALIDATION_FAILED whose `details` value is authored prose containing none of the substrings 'Too big', 'Too small', 'expected number', 'expected string': (1) POST /api/invoices with lineItems[0].quantity=1000001; (2) POST /api/invoices with lineItems[0].unitPriceCents=100000001; (3) POST /api/invoices with clientId=\"\"; (4) POST /api/auth/signup with a 321-character email; (5) in a browser on /invoices/new, select a client, type quantity 2000000 and Save \u2014 the inline field error under Quantity is authored prose. Add a vitest case per message in src/shared/schemas/schemas.test.ts so reverting any of them turns `npm test` red (the T-023 messages already have this and it works). `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, `npm run format:check` and `npx playwright test` all still exit 0.",
+      "opened_by": "oma-qa",
+      "notes": "T-023 fixed the three strings run 1 named but not the class they belonged to \u2014 that under-scoping is on QA's run-1 filing. Four constraints still carry Zod defaults: src/shared/schemas/invoices.ts:26 quantity.max(1_000_000), :32 unitPriceCents.max(100_000_000), src/shared/schemas/common.ts:8 idSchema=z.string().min(1), src/shared/schemas/auth.ts:7 email.max(320). Unlike F-3, one of these is reachable without hand-editing a URL: typing quantity 2000000 into the invoice form and pressing Save renders 'Too big: expected number to be <=1000000' inline under the field \u2014 verified in a real browser against the production build. REQ-009 requires human-readable inline messages and the contract calls details values 'Human-readable, safe to render inline (REQ-009)'. Match the authored style already two lines above in the same file ('Quantity must be greater than zero.').",
+      "evidence": "handoff seq 21; 180 tests green"
+    },
+    {
+      "id": "T-026",
+      "req": "REQ-003",
+      "title": "Resolve the 32-bit Int money columns vs the contract's line-item maxima (blocked on a frozen-artifact decision)",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "After the user/architect decides which frozen artifact moves: EITHER (a) data-model + prisma/schema.prisma widen Invoice.totalCents and InvoiceLineItem.amountCents to BigInt with an additive migration, the service/DTO boundary keeps returning JSON numbers within Number.MAX_SAFE_INTEGER, and a vitest case proves a contract-maximum line item (quantity 1000 x unitPriceCents 100000000) round-trips exactly; OR (b) api-contract.yaml tightens LineItemInput.quantity/unitPriceCents (and adds an invoice-total bound) so no contract-legal input can produce a value above 2147483647, with an authored VALIDATION_FAILED message per REQ-009 and a vitest case asserting the rejection. Either way `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` and `npx playwright test` exit 0, and the frozen-artifact SHA-256 values in .oma/state.json are updated to match.",
+      "opened_by": "oma-qa",
+      "notes": "Answers oma-backend's Q-004, and corrects its premise. There is NO ~$21.5M cap on the shipped stack: SQLite INTEGER is 64-bit and the Prisma driver adapter passes the value straight through. QA created a real invoice at contract-legal maxima (quantity 1000 x unitPriceCents 100000000) \u2014 POST returned 201 with totalCents 100000000000, GET /invoices and GET /dashboard both read it back exactly, and the raw sqlite column holds 100000000000 as typeof 'integer'. No v1 symptom exists. The defect is portability: Prisma Int on PostgreSQL is a 4-byte INTEGER (max 2147483647), and ADR-001 \u2014 the entire justification for the sqlite override \u2014 promises a v2 Postgres move is a driver-adapter + migration swap. Rows this API accepts today cannot follow that migration. So api-contract.yaml (maxima at :805-814) and data-model.md (Int columns) are mutually inconsistent under a guarantee ADR-001 makes; both are frozen, so neither remedy is available to a dev agent without a change request. BLOCKED pending that decision \u2014 do not start implementation. Escalated as contract_changes in handoff seq 19. Not a v1 malfunction; do not treat this as urgent ahead of T-025.",
+      "evidence": "handoff seq 21; 180 tests green"
+    },
+    {
+      "id": "T-027",
+      "req": "REQ-009",
+      "title": "Raw Zod default text still reaches `details` on container type mismatches (object/array), including a missing `lineItems`",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "Every one of these probes returns 400 VALIDATION_FAILED whose `details` values contain none of the substrings 'Invalid input', 'expected object', 'expected array', 'Too big', 'Too small': (1) POST /api/clients with body `\"hello\"`, `5`, `null`, `[]`; (2) POST /api/auth/signup with body `[]`; (3) POST /api/invoices/{id}/status with body `\"paid\"`; (4) PATCH /api/clients/{id} with body `1`; (5) POST /api/invoices with `lineItems` set to `\"nope\"`, `5`, `{}`; (6) POST /api/invoices with `lineItems` OMITTED entirely. Add a vitest case per class in src/shared/schemas/schemas.test.ts so reverting the message turns `npm test` red. `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, `npm run format:check` and `npx playwright test` all still exit 0.",
+      "opened_by": "oma-qa",
+      "notes": "T-025 is genuinely done for FIELD-level constraints: QA fuzzed all 11 boundary/input schemas over 130 distinct (field,message) pairs and every field-level message is authored prose, including the four run-2 named and the three extra oma-backend added. But oma-backend's handoff seq 21 claim -- 'no raw Zod default text reaches `details` from any input schema any more' -- is false as stated. Two constructs still emit Zod defaults: (a) the top-level `z.object(...)` on EVERY input schema, when the JSON body parses but is not an object -> details._ = 'Invalid input: expected object, received string'; (b) `z.array(lineItemInputSchema)`'s invalid_type, when `lineItems` is a non-array OR is missing -> details.lineItems = 'Invalid input: expected array, received undefined'. Verified over HTTP against `next start` on :3551, 11 distinct probes, run-3. Reachability: NOT reachable from the app's own forms (they always send a well-shaped object), so this is API-surface only -- the same severity class as F-3 was in run 1, not the user-reachable class F-5 was. The missing-`lineItems` case is the most plausible: a normal API-client mistake. Fix shape: `z.object({...}, { error: 'Provide the request body as a JSON object.' })` on each input schema, and `z.array(lineItemInputSchema, { error: 'Add at least one line item.' })`.",
+      "evidence": "handoff seq 23; 191 tests green"
+    },
+    {
+      "id": "T-028",
+      "req": "REQ-006",
+      "title": "Dashboard fails entirely for contract-legal invoice totals above Number.MAX_SAFE_INTEGER (centsSchema is stricter than the frozen contract)",
+      "owner": "oma-backend",
+      "status": "done",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "Create one invoice with 100 line items at the contract maxima (quantity 1000000, unitPriceCents 100000000 -> totalCents 10000000000000000), then load /dashboard in a browser: the Outstanding figure renders and the recent-invoices list renders; the error banner 'Couldn't load your dashboard.' does NOT appear. Add a vitest case pinning that `centsSchema` (and `dashboardSchema`/`invoiceSummarySchema` through it) accepts a value above Number.MAX_SAFE_INTEGER, so reverting the fix turns `npm test` red. `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, `npm run format:check` and `npx playwright test` all still exit 0.",
+      "opened_by": "oma-qa",
+      "notes": "src/shared/schemas/common.ts:29 `centsSchema = z.number().int().min(0)`. In Zod 4, `.int()` is a SAFE-integer check: it rejects anything above 9007199254740991 with 'Too big: expected int to be <=9007199254740991' (verified directly against the installed zod 4.4.3). The frozen api-contract declares `totalCents: { type: integer, minimum: 0 }` with NO maximum, so the schema is stricter than the contract it is supposed to mirror. Consequence, reproduced live on the production build: ONE contract-legal POST /api/invoices (100 line items at the maxima) yields totalCents 10000000000000000; the API stores and returns it exactly, /invoices and /invoices/{id} both render it correctly ($100,000,000,000,000.00), but /dashboard's client-side `totalsSchema.safeParse` fails and the screen shows only 'Couldn't load your dashboard.' -- the whole screen, not a degraded figure. Same break for the dashboard AGGREGATE, which is a sum over all unpaid invoices and has no contract bound at all. NOT a regression from T-026/ADR-006: SQLite already stored 64-bit values in v1, so this predates the widening. Related to but distinct from Q-005: Q-005 is about JSON-number precision on the wire and needs an api-contract change; this one is a code-side schema that contradicts the contract as frozen and can be fixed without touching any frozen artifact. Probable owner oma-backend because src/shared/schemas/ is backend-written per stack.md's directory contract, though the symptom surfaces in oma-frontend's dashboard screen -- disagree in your handoff if the error-state policy in screens/dashboard.md is the real subject.",
+      "evidence": "handoff seq 23; 191 tests green"
+    },
+    {
+      "id": "T-029",
+      "req": "REQ-001",
+      "title": "NEXT_PUBLIC_SITE_URL missing from env.template and the deploy runbook",
+      "owner": "oma-devops",
+      "status": "todo",
+      "stage": "fix",
+      "depends_on": [],
+      "acceptance": "NEXT_PUBLIC_SITE_URL appears in .oma/06-devops/env.template and the runbook env table, marked BUILD-time; a build with it set emits canonical/og/sitemap URLs on that origin, not localhost",
+      "opened_by": "orchestrator (07-growth verification)",
+      "evidence": "curl of /signup after Growth: canonical=http://localhost:3000/signup, sitemap <loc> on localhost. Var is read by src/app/site.ts, added in 07-growth, after env.template was written in 06-devops.",
+      "notes": "Silent failure on first deploy: no crash, just wrong URLs everywhere."
+    }
+  ]
+}

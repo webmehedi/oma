@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Every hook fails open by design, so a broken one is silent rather than
+      # loud. This is the only thing standing between a hook bug and a user's
+      # project, so it runs first.
+      - name: Hook self-test
+        run: bash scripts/selftest.sh
+
+      - name: Hook scripts are executable
+        run: |
+          fail=0
+          for f in hooks/scripts/*.sh; do
+            [ -x "$f" ] || { echo "::error file=$f::not executable — the hook will not run"; fail=1; }
+          done
+          exit $fail
+
+      - name: Shell syntax
+        run: for f in hooks/scripts/*.sh scripts/*.sh; do bash -n "$f" || exit 1; done
+
+      - name: JSON manifests and schemas parse
+        run: |
+          for f in .claude-plugin/*.json templates/*.json; do
+            python3 -c "import json,sys; json.load(open('$f'))" \
+              || { echo "::error file=$f::invalid JSON"; exit 1; }
+          done
+
+      - name: Manifest version matches the README badge
+        run: |
+          v=$(python3 -c "import json;print(json.load(open('.claude-plugin/plugin.json'))['version'])")
+          grep -q "badge/version-$v-" README.md \
+            || { echo "::error::plugin.json is $v but the README badge disagrees"; exit 1; }
+
+      - name: Every agent has the frontmatter the loader requires
+        run: |
+          python3 - <<'PY'
+          import glob, os, re, sys
+          bad = []
+          for p in glob.glob("agents/*.md"):
+              t = open(p).read()
+              m = re.match(r"^---\n(.*?)\n---\n", t, re.S)
+              if not m:
+                  bad.append(f"{p}: no frontmatter"); continue
+              fm = dict(re.findall(r"^(\w+):\s*(.*)$", m.group(1), re.M))
+              want = os.path.basename(p)[:-3]
+              if fm.get("name") != want:
+                  bad.append(f"{p}: name '{fm.get('name')}' != filename '{want}'")
+              for k in ("description", "tools"):
+                  if k not in fm:
+                      bad.append(f"{p}: missing '{k}'")
+          for b in bad:
+              print(f"::error::{b}")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Every skill has a description
+        run: |
+          python3 - <<'PY'
+          import glob, re, sys
+          bad = []
+          for p in glob.glob("skills/*/SKILL.md"):
+              m = re.match(r"^---\n(.*?)\n---\n", open(p).read(), re.S)
+              if not m or "description:" not in m.group(1):
+                  bad.append(f"{p}: missing frontmatter description")
+          for b in bad:
+              print(f"::error::{b}")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Every phase referenced by the runner has a playbook
+        run: |
+          for p in 01-discovery 02-architecture 03-design 04-build 05-qa 06-devops 07-growth 08-ship 00-archaeology; do
+            [ -f "phases/$p.md" ] || { echo "::error::phases/$p.md is missing"; exit 1; }
+          done
+
+      - name: Plugin manifest validates
+        run: npx -y @anthropic-ai/claude-code@latest plugin validate . || echo "::warning::validator unavailable on CI; manifests still parsed above"

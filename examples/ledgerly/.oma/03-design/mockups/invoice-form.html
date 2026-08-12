@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New invoice — Ledgerly</title>
+<link rel="stylesheet" href="tokens.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/motion@12/dist/motion.js" defer></script>
+<script src="motion.js" defer></script>
+<style>
+  .form-col { max-width: var(--size-invoice-doc-max); margin: 0 auto; }
+  .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+  .li-row { display: grid; grid-template-columns: 1fr 90px 120px 110px 40px; gap: var(--space-3); align-items: start; }
+  .li-head { color: var(--color-text-muted); }
+  .li-amount { display: flex; align-items: center; height: var(--size-control-height); justify-content: flex-end; }
+  @media (max-width: 639px) {
+    .hide-sm { display: none; }
+    .date-row { grid-template-columns: 1fr; }
+    .li-row { grid-template-columns: 1fr 1fr 40px; }
+    .li-row .li-desc { grid-column: 1 / -1; }
+    .li-head { display: none; }
+  }
+</style>
+</head>
+<body data-screen-state="ideal">
+
+<header class="app-nav no-print">
+  <div class="nav-inner">
+    <a class="brand" href="dashboard.html"><span class="brand-mark">●</span> Ledgerly</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="invoices.html" aria-current="page">Invoices</a>
+      <a href="clients.html">Clients</a>
+    </nav>
+    <div class="nav-user">
+      <span class="hide-sm">maya@example.com</span>
+      <a class="btn btn-ghost btn-sm" href="auth.html">Sign out</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="form-col">
+
+  <!-- IDEAL: editing INV-0007 with live totals -->
+  <section data-state-panel="ideal">
+    <div class="page-header">
+      <h1 class="t-title">Edit <span class="t-mono">INV-0007</span></h1>
+      <a class="t-small" href="invoice-detail.html">← Back to invoice</a>
+    </div>
+    <div class="card card-pad" data-enter>
+      <form style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="field">
+          <label class="field-label" for="inv-client">Client</label>
+          <select class="select" id="inv-client">
+            <option value="c_ck2xa11aa0001" selected>Acme Design Co</option>
+            <option value="c_ck2xa22bb0002">Bluebird Cafe</option>
+            <option value="c_ck2xa33cc0003">Hearthstone Yoga</option>
+            <option value="c_ck2xa44dd0004">Northwind Press</option>
+          </select>
+        </div>
+        <div class="date-row">
+          <div class="field">
+            <label class="field-label" for="inv-issue">Issue date</label>
+            <input class="input" id="inv-issue" type="date" value="2026-08-12">
+          </div>
+          <div class="field">
+            <label class="field-label" for="inv-due">Due date <span class="optional text-muted">(optional)</span></label>
+            <input class="input" id="inv-due" type="date" value="2026-09-11">
+          </div>
+        </div>
+
+        <fieldset style="border: none; margin: 0; padding: 0;">
+          <legend class="field-label" style="margin-bottom: var(--space-3);">Line items</legend>
+          <div class="li-row li-head t-micro" aria-hidden="true" style="margin-bottom: var(--space-2);">
+            <span>Description</span><span>Qty</span><span>Unit price</span><span style="text-align:right;">Amount</span><span></span>
+          </div>
+          <div id="li-rows" style="display: flex; flex-direction: column; gap: var(--space-3);">
+            <div class="li-row" data-li>
+              <input class="input li-desc" aria-label="Description" value="Landing page design">
+              <input class="input" aria-label="Quantity" type="number" step="0.001" min="0" value="1" data-li-qty>
+              <input class="input" aria-label="Unit price in dollars" type="number" step="0.01" min="0" value="1250.00" data-li-price>
+              <output class="li-amount t-mono" aria-label="Amount" data-li-amount>$1,250.00</output>
+              <button class="btn btn-ghost btn-sm" type="button" data-li-remove aria-label="Remove line item">✕</button>
+            </div>
+            <div class="li-row" data-li>
+              <input class="input li-desc" aria-label="Description" value="Revision rounds (hours)">
+              <input class="input" aria-label="Quantity" type="number" step="0.001" min="0" value="5" data-li-qty>
+              <input class="input" aria-label="Unit price in dollars" type="number" step="0.01" min="0" value="125.00" data-li-price>
+              <output class="li-amount t-mono" aria-label="Amount" data-li-amount>$625.00</output>
+              <button class="btn btn-ghost btn-sm" type="button" data-li-remove aria-label="Remove line item">✕</button>
+            </div>
+          </div>
+          <button class="btn btn-ghost" type="button" id="add-li" style="margin-top: var(--space-3);">+ Add line item</button>
+        </fieldset>
+
+        <div id="totals" style="display: flex; justify-content: flex-end; align-items: baseline; gap: var(--space-4); padding: var(--space-4); border-radius: var(--radius-md); border-top: 1px solid var(--color-border);">
+          <span class="t-micro text-muted">Total</span>
+          <span class="t-title t-mono" id="total-amount" aria-live="polite">$1,875.00</span>
+        </div>
+
+        <div style="display: flex; gap: var(--space-3);">
+          <a class="btn btn-primary" href="invoice-detail.html">Save invoice</a>
+          <a class="btn btn-ghost" href="invoices.html">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- EMPTY: pristine create form -->
+  <section data-state-panel="empty" hidden>
+    <div class="page-header">
+      <h1 class="t-title">New invoice</h1>
+      <a class="t-small" href="invoices.html">← Invoices</a>
+    </div>
+    <div class="card card-pad">
+      <form style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="field">
+          <label class="field-label" for="inv-client-e">Client</label>
+          <select class="select" id="inv-client-e">
+            <option value="" selected>Choose a client…</option>
+            <option value="c_ck2xa11aa0001">Acme Design Co</option>
+            <option value="c_ck2xa22bb0002">Bluebird Cafe</option>
+            <option value="c_ck2xa33cc0003">Hearthstone Yoga</option>
+            <option value="c_ck2xa44dd0004">Northwind Press</option>
+          </select>
+        </div>
+        <div class="date-row">
+          <div class="field">
+            <label class="field-label" for="inv-issue-e">Issue date</label>
+            <input class="input" id="inv-issue-e" type="date" value="2026-08-12">
+            <p class="field-hint">Defaults to today.</p>
+          </div>
+          <div class="field">
+            <label class="field-label" for="inv-due-e">Due date <span class="optional text-muted">(optional)</span></label>
+            <input class="input" id="inv-due-e" type="date">
+          </div>
+        </div>
+        <fieldset style="border: none; margin: 0; padding: 0;">
+          <legend class="field-label" style="margin-bottom: var(--space-3);">Line items</legend>
+          <div class="li-row" data-li>
+            <input class="input li-desc" aria-label="Description" placeholder="What did you do?">
+            <input class="input" aria-label="Quantity" type="number" step="0.001" min="0" value="1">
+            <input class="input" aria-label="Unit price in dollars" type="number" step="0.01" min="0" placeholder="0.00">
+            <output class="li-amount t-mono" aria-label="Amount">$0.00</output>
+            <button class="btn btn-ghost btn-sm" type="button" disabled title="An invoice needs at least one line item" aria-label="Remove line item">✕</button>
+          </div>
+          <button class="btn btn-ghost" type="button" style="margin-top: var(--space-3);">+ Add line item</button>
+        </fieldset>
+        <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: var(--space-4); padding: var(--space-4); border-top: 1px solid var(--color-border);">
+          <span class="t-micro text-muted">Total</span>
+          <span class="t-title t-mono">$0.00</span>
+        </div>
+        <div style="display: flex; gap: var(--space-3);">
+          <button class="btn btn-primary" type="button" disabled>Save invoice</button>
+          <a class="btn btn-ghost" href="invoices.html">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- LOADING: edit-mode fetch -->
+  <section data-state-panel="loading" hidden aria-busy="true" aria-label="Loading invoice">
+    <div class="page-header"><span class="skeleton" style="width: 40%; height: var(--type-title-line);"></span></div>
+    <div class="card card-pad" style="display: flex; flex-direction: column; gap: var(--space-5);">
+      <span class="skeleton" style="width: 100%; height: var(--size-control-height);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--size-control-height);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--size-control-height);"></span>
+      <span class="skeleton" style="width: 100%; height: var(--size-control-height);"></span>
+      <span class="skeleton" style="width: 40%; height: var(--type-title-line); align-self: flex-end;"></span>
+    </div>
+  </section>
+
+  <!-- ERROR: save failed, entries preserved -->
+  <section data-state-panel="error" hidden>
+    <div class="page-header">
+      <h1 class="t-title">New invoice</h1>
+      <a class="t-small" href="invoices.html">← Invoices</a>
+    </div>
+    <div class="banner banner-danger" role="alert" style="margin-bottom: var(--space-4);">
+      <span class="banner-msg">Something went wrong saving this invoice. Your entries are still here — try again.</span>
+      <button class="btn btn-secondary btn-sm" type="button">Retry</button>
+    </div>
+    <div class="card card-pad">
+      <form style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="field">
+          <label class="field-label" for="inv-client-err">Client</label>
+          <select class="select" id="inv-client-err"><option selected>Hearthstone Yoga</option></select>
+        </div>
+        <div class="li-row" data-li>
+          <input class="input li-desc" aria-label="Description" value="Class pass card design">
+          <input class="input" aria-label="Quantity" type="number" value="1">
+          <input class="input" aria-label="Unit price in dollars" type="number" value="360.00">
+          <output class="li-amount t-mono" aria-label="Amount">$360.00</output>
+          <button class="btn btn-ghost btn-sm" type="button" disabled aria-label="Remove line item">✕</button>
+        </div>
+        <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: var(--space-4); padding: var(--space-4); border-top: 1px solid var(--color-border);">
+          <span class="t-micro text-muted">Total</span>
+          <span class="t-title t-mono">$360.00</span>
+        </div>
+        <div style="display: flex; gap: var(--space-3);">
+          <button class="btn btn-primary" type="button">Save invoice</button>
+          <a class="btn btn-ghost" href="invoices.html">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- PARTIAL: VALIDATION_FAILED mapped per field -->
+  <section data-state-panel="partial" hidden>
+    <div class="page-header">
+      <h1 class="t-title">New invoice</h1>
+      <a class="t-small" href="invoices.html">← Invoices</a>
+    </div>
+    <div class="card card-pad">
+      <form style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="field">
+          <label class="field-label" for="inv-client-p">Client</label>
+          <select class="select" id="inv-client-p" aria-invalid="true" aria-describedby="inv-client-p-err">
+            <option value="" selected>Choose a client…</option>
+            <option>Acme Design Co</option>
+          </select>
+          <p class="field-error" id="inv-client-p-err" role="alert">Choose a client.</p>
+        </div>
+        <div class="date-row">
+          <div class="field">
+            <label class="field-label" for="inv-issue-p">Issue date</label>
+            <input class="input" id="inv-issue-p" type="date" value="2026-08-12">
+          </div>
+          <div class="field">
+            <label class="field-label" for="inv-due-p">Due date <span class="optional text-muted">(optional)</span></label>
+            <input class="input" id="inv-due-p" type="date">
+          </div>
+        </div>
+        <fieldset style="border: none; margin: 0; padding: 0;">
+          <legend class="field-label" style="margin-bottom: var(--space-3);">Line items</legend>
+          <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            <div class="li-row" data-li>
+              <div class="field" style="gap: var(--space-1);">
+                <input class="input li-desc" aria-label="Description" value="" aria-invalid="true" aria-describedby="li-desc-p-err">
+                <p class="field-error" id="li-desc-p-err" role="alert">Description is required.</p>
+              </div>
+              <input class="input" aria-label="Quantity" type="number" step="0.001" value="7.5">
+              <div class="field" style="gap: var(--space-1);">
+                <input class="input" aria-label="Unit price in dollars" type="number" step="0.01" value="-150.00" aria-invalid="true" aria-describedby="li-price-p-err">
+                <p class="field-error" id="li-price-p-err" role="alert">Price can’t be negative.</p>
+              </div>
+              <output class="li-amount t-mono" aria-label="Amount">—</output>
+              <button class="btn btn-ghost btn-sm" type="button" disabled aria-label="Remove line item">✕</button>
+            </div>
+          </div>
+        </fieldset>
+        <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: var(--space-4); padding: var(--space-4); border-top: 1px solid var(--color-border);">
+          <span class="t-micro text-muted">Total</span>
+          <span class="t-title t-mono">$0.00</span>
+        </div>
+        <div style="display: flex; gap: var(--space-3);">
+          <button class="btn btn-primary" type="button">Save invoice</button>
+          <a class="btn btn-ghost" href="invoices.html">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  </div>
+</main>
+
+<p id="status-live" class="sr-only" aria-live="polite"></p>
+
+<div class="state-switcher no-print" role="group" aria-label="Mockup state switcher">
+  <span class="sw-label t-micro">State</span>
+  <button type="button" data-set-state="loading">Loading</button>
+  <button type="button" data-set-state="empty">Empty</button>
+  <button type="button" data-set-state="ideal">Ideal</button>
+  <button type="button" data-set-state="error">Error</button>
+  <button type="button" data-set-state="partial">Partial</button>
+</div>
+
+<script>
+// Live totals (ADR-003 mirror: round half-up per line, then sum) + row add/remove.
+document.addEventListener('DOMContentLoaded', function () {
+  var rows = document.getElementById('li-rows');
+  var totalEl = document.getElementById('total-amount');
+  var totalsBox = document.getElementById('totals');
+  if (!rows) return;
+
+  function fmt(cents) {
+    return '$' + (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function recompute() {
+    var total = 0;
+    rows.querySelectorAll('[data-li]').forEach(function (row) {
+      var qty = parseFloat(row.querySelector('[data-li-qty]').value) || 0;
+      var priceCents = Math.round((parseFloat(row.querySelector('[data-li-price]').value) || 0) * 100);
+      var amount = Math.round(qty * priceCents);
+      row.querySelector('[data-li-amount]').textContent = fmt(amount);
+      total += amount;
+    });
+    totalEl.textContent = fmt(total);
+    // motion-spec: numbers never tween; the container pulses to point the eye
+    if (!window.LedgerlyMotion.reduced && totalsBox.animate) {
+      totalsBox.animate(
+        { backgroundColor: ['transparent', 'var(--color-surface-sunken)', 'transparent'] },
+        { duration: window.LedgerlyMotion.tokens.move, easing: window.LedgerlyMotion.tokens.easeMove }
+      );
+    }
+    // last remaining row's remove is disabled
+    var all = rows.querySelectorAll('[data-li]');
+    all.forEach(function (row) {
+      var rm = row.querySelector('[data-li-remove]');
+      if (rm) rm.disabled = all.length === 1;
+    });
+  }
+  rows.addEventListener('input', recompute);
+  rows.addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-li-remove]');
+    if (!rm || rm.disabled) return;
+    var row = rm.closest('[data-li]');
+    window.LedgerlyMotion.exit(row, function () { row.remove(); recompute(); });
+  });
+  document.getElementById('add-li').addEventListener('click', function () {
+    var row = document.createElement('div');
+    row.className = 'li-row';
+    row.setAttribute('data-li', '');
+    row.innerHTML =
+      '<input class="input li-desc" aria-label="Description" placeholder="What did you do?">' +
+      '<input class="input" aria-label="Quantity" type="number" step="0.001" min="0" value="1" data-li-qty>' +
+      '<input class="input" aria-label="Unit price in dollars" type="number" step="0.01" min="0" placeholder="0.00" data-li-price>' +
+      '<output class="li-amount t-mono" aria-label="Amount" data-li-amount>$0.00</output>' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-li-remove aria-label="Remove line item">✕</button>';
+    rows.appendChild(row);
+    window.LedgerlyMotion.enterFast(row);
+    row.querySelector('.li-desc').focus();
+    recompute();
+  });
+  recompute();
+});
+</script>
+
+</body>
+</html>

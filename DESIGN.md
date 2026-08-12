@@ -60,18 +60,11 @@ oma/
 ├── .claude-plugin/
 │   ├── plugin.json                 # manifest
 │   └── marketplace.json            # so users can /plugin marketplace add mehedi/oma
-├── agents/
-│   ├── oma-project-manager.md
-│   ├── oma-architect.md
-│   ├── oma-ux-designer.md
-│   ├── oma-frontend.md
-│   ├── oma-backend.md
-│   ├── oma-qa.md
-│   ├── oma-security.md
-│   ├── oma-devops.md
-│   ├── oma-seo.md
-│   ├── oma-marketer.md
-│   └── oma-social.md
+├── agents/                         # 12 role definitions
+│   ├── oma-project-manager.md      #   …architect, ux-designer, frontend,
+│   ├── oma-architect.md            #   backend, qa, security, devops, seo,
+│   ├── ...                         #   marketer, social
+│   └── oma-archaeologist.md        # brownfield only (M5)
 ├── skills/
 │   ├── oma-init/SKILL.md           # intake: idea → brief + clarifying questions
 │   ├── oma-run/SKILL.md            # advance to the next phase
@@ -81,8 +74,13 @@ oma/
 │   ├── oma-change/SKILL.md         # request a change to a frozen contract
 │   ├── oma-task/SKILL.md           # add / reassign a backlog item
 │   └── oma-ship/SKILL.md           # final assembly + handoff report
+├── phases/                         # 00-archaeology … 08-ship playbooks (orchestrator-read)
 ├── hooks/
-│   └── hooks.json                  # contract-freeze guard, artifact validation, state load
+│   ├── hooks.json
+│   └── scripts/                    # contract-guard, deploy-guard, audit-guard,
+│                                   # command-log, handoff-check, session-start
+├── scripts/selftest.sh             # 41 behavioral cases across all six hooks
+├── examples/ledgerly/              # a complete .oma/ from a real run (M6)
 ├── templates/
 │   ├── state.schema.json
 │   ├── handoff.schema.json
@@ -91,6 +89,8 @@ oma/
 │   └── ...
 ├── stacks/
 │   └── web-app-default.md          # the opinionated default stack profile
+├── TROUBLESHOOTING.md
+├── CHANGELOG.md
 └── README.md
 ```
 
@@ -644,7 +644,15 @@ Opinionation is the point. Agent prompts can reference concrete APIs and idioms,
 | **M3 — Build & QA** | Frontend, Backend, QA agents + parallel build + the repair loop + hooks | The hard part and the real risk. Test on a real sample idea before going further |
 | **M4 — Ops & Growth** | DevOps, Security, SEO, Marketer, Social + `/oma:ship` + the deploy guard | Additive; each is independent |
 | **M5 — Brownfield** | `oma-archaeologist` + `00-archaeology` + scope modes + the audit guard | Inherits all the machinery above; only safe to build once that machinery is proven |
-| **M6 — Distribution** | README, marketplace listing, worked example, troubleshooting | — |
+| **M6 — Distribution** | README, marketplace listing, worked example, troubleshooting, hook self-test | — |
+
+**M6 status: built (v0.6.0).** `examples/ledgerly/` carries the complete 74-file
+`.oma/` from a real run; `TROUBLESHOOTING.md` documents the failure modes hit
+during validation; `scripts/selftest.sh` covers all six hooks in 41 behavioral
+cases and runs in CI. Writing that self-test immediately found a real bug:
+`session-start.sh` resolved `.oma/state.json` by relative path and was therefore
+silent whenever the hook ran from anywhere but the project root — a hook that had
+never been exercised in two years of design and three validation runs.
 
 *Renumbered 2026-08-13.* Brownfield was specified in §18 as "post-v1" and built
 as M5 once M4 was validated, which displaced the original M5. Distribution is

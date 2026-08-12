@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "project": {
+    "name": "Ledgerly",
+    "slug": "ledgerly",
+    "created": "2026-08-12",
+    "one_liner": "Tiny invoicing app for freelancers: clients, line-item invoices, paid/unpaid tracking, outstanding-totals dashboard."
+  },
+  "stack": {
+    "profile": "web-app-default",
+    "overrides": {
+      "db": "sqlite"
+    },
+    "resolved": ".oma/02-architecture/stack.md"
+  },
+  "phase": {
+    "current": "08-ship",
+    "status": "approved",
+    "iteration": 1,
+    "started": null
+  },
+  "gates": [
+    {
+      "phase": "01-discovery",
+      "status": "approved",
+      "at": "2026-08-12T00:20:00Z",
+      "notes": ""
+    },
+    {
+      "phase": "02-architecture",
+      "status": "approved",
+      "at": "2026-08-12T00:50:00Z",
+      "notes": ""
+    },
+    {
+      "phase": "03-design",
+      "status": "approved",
+      "at": "2026-08-12T01:30:00Z",
+      "notes": ""
+    },
+    {
+      "phase": "04-build",
+      "status": "approved",
+      "at": "2026-08-12T08:00:00Z",
+      "notes": "20/20 tasks done; build+lint+typecheck green"
+    },
+    {
+      "phase": "05-qa",
+      "status": "approved",
+      "at": "2026-08-12T10:30:00Z",
+      "notes": "All checks green: 191 unit + 11 e2e. Q-002/Q-003/Q-005 accepted as v1.1 items per QA run-3 recommendations."
+    },
+    {
+      "phase": "06-devops",
+      "status": "approved",
+      "at": "2026-08-12T13:20:00Z",
+      "notes": "Security: 0 critical/0 high; SEC-003+SEC-009 closed in next.config.ts. 3 medium (rate limit, timing oracle) + 5 low accepted as v1.1 items. CI/container/runbook verified locally: typecheck+lint+format+build 0, 191 unit, docker build + first-boot proof green."
+    },
+    {
+      "phase": "07-growth",
+      "status": "approved",
+      "at": "2026-08-13T00:30:00Z",
+      "notes": "SEO/Marketer/Social ran in parallel, disjoint territory, no handoff collisions. Build green after SEO source changes (191 tests). Claim audit passed: 3 sampled claims trace to done tasks; no out-of-scope capability implied; zero fabricated social proof. T-029 filed: NEXT_PUBLIC_SITE_URL missing from env.template \u2014 canonicals/sitemap ship on localhost until fixed. 21 [[TODO]]s + 7 assets outstanding for the user."
+    },
+    {
+      "phase": "08-ship",
+      "status": "approved",
+      "at": "2026-08-13T00:55:00Z",
+      "notes": "Ship-time run green: typecheck/lint/format/build 0, 191 unit + 11 e2e. 10/10 REQs shipped. Known issues: T-029 (NEXT_PUBLIC_SITE_URL) must be fixed before first deploy; 3 medium + 5 low security findings accepted. Never deployed."
+    }
+  ],
+  "contracts": {
+    "api": {
+      "path": ".oma/02-architecture/api-contract.yaml",
+      "frozen": true,
+      "sha256": "98f0cc93890a3daffb6d64b3cea5832234e8a5438b67e831e42458da51d2a8b1",
+      "version": "1.0"
+    },
+    "data_model": {
+      "path": ".oma/02-architecture/data-model.md",
+      "frozen": true,
+      "sha256": "e6054a3df01ce7c94534f819e8139734630c4886abdd89fbbf374bb6ccc3f80b",
+      "version": "1.1"
+    },
+    "tokens": {
+      "path": ".oma/03-design/tokens.json",
+      "frozen": true,
+      "sha256": "08c5cb2fc227d7443a62c9bf95578dc98beaf42f496f1ec768cee31e405d5e7b",
+      "version": "1.0"
+    },
+    "motion": {
+      "path": ".oma/03-design/motion-spec.md",
+      "frozen": true,
+      "sha256": "30e25267402ca1cc424f9cb4bc2cf873d8a86dfe9f66e4fe7fc9254078e59c60",
+      "version": "1.0"
+    }
+  },
+  "decisions": [
+    {
+      "id": "D-001",
+      "question": "Q-001: sqlite-only assumptions blocking v2 Postgres?",
+      "answer": "Resolved by ADR-001: portability confined to src/server/db.ts (cuid2 ids, no raw SQL, integer money, DB-backed sessions).",
+      "by": "oma-architect",
+      "at": "2026-08-12T00:50:00Z",
+      "adr": "ADR-001"
+    },
+    {
+      "id": "D-002",
+      "question": "Frozen-stack toolchain incompatibility (lint could never pass)",
+      "answer": "typescript 7.0.2\u21926.0.3, eslint 10.8.1\u21929.39.5; latest-that-composes over latest-absolute. Full pipeline proven green.",
+      "by": "orchestrator (change request from oma-backend handoff seq 5)",
+      "at": "2026-08-12T03:25:00Z",
+      "adr": null
+    },
+    {
+      "id": "D-003",
+      "question": "T-026: money columns typed Int cannot hold values the API accepts, breaking the ADR-001 Postgres portability promise",
+      "answer": "APPROVED: widen money/quantity columns to BigInt in data-model.md + schema + migration. Cost of not changing: ADR-001 promise is silently false, discovered only at v2 migration.",
+      "by": "user (via /oma:change)",
+      "at": "2026-08-12T09:30:00Z",
+      "adr": "ADR-006"
+    }
+  ],
+  "open_questions": [
+    {
+      "id": "Q-002",
+      "from": "oma-frontend",
+      "for": "oma-ux-designer",
+      "text": "Dashboard stat captions (\"4 unpaid invoices\") need per-status counts the frozen /dashboard shape lacks; currently rendered only when invoiceCount<=10.",
+      "blocking": false
+    },
+    {
+      "id": "Q-003",
+      "from": "oma-frontend",
+      "for": "oma-ux-designer",
+      "text": "Two <640px layout deviations from the mockups introduced by the responsive row-card treatment.",
+      "blocking": false
+    },
+    {
+      "id": "Q-004",
+      "from": "oma-backend",
+      "for": "user",
+      "text": "Invoice money columns are Prisma Int (32-bit), capping totalCents near $21.5M while the frozen contract input maxima allow a larger product. Arithmetic is exact; the column type is the ceiling. data_model is frozen.",
+      "blocking": false
+    },
+    {
+      "id": "Q-005",
+      "from": "oma-architect",
+      "for": "user",
+      "text": "Frozen contract worst case (100 lines x 1e14 cents) puts totalCents above Number.MAX_SAFE_INTEGER on the JSON wire; closing it requires an api contract change.",
+      "blocking": false
+    }
+  ],
+  "qa": {
+    "last_run": "2026-08-12T10:30:00Z",
+    "install": "pass",
+    "typecheck": "pass",
+    "lint": "pass",
+    "build": "pass",
+    "test": "pass",
+    "open_failures": 0,
+    "loop_iteration": 3
+  },
+  "handoff_seq": 28,
+  "security": {
+    "last_review": "2026-08-12T12:40:00Z",
+    "critical": 0,
+    "high": 0,
+    "medium": 3,
+    "low": 6,
+    "open_findings": 0,
+    "audit": "pass",
+    "review_iteration": 1
+  },
+  "ship": {
+    "at": "2026-08-13T00:55:00Z",
+    "report": ".oma/08-ship/ship-report.md",
+    "commit": "7ece15c",
+    "final_check": {
+      "install": "pass",
+      "typecheck": "pass",
+      "lint": "pass",
+      "build": "pass",
+      "test": "pass"
+    }
+  }
+}
