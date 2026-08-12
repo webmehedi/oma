@@ -57,13 +57,13 @@ Three things make it different from "ask an AI to build my app":
 - 📦 [What you actually get](#-what-you-actually-get)
 - 👥 [The team](#-the-team)
 - ⚡ [Commands](#-commands)
-- ⚙️ [How it works](#-how-it-works)
+- 🔧 [How it works](#-how-it-works)
 - 🧪 [Proven on a real project](#-proven-on-a-real-project)
 - 🧱 [The default stack](#-the-default-stack)
 - 📋 [Requirements](#-requirements)
 - ❓ [FAQ](#-faq)
-- 🗺️ [Roadmap](#-roadmap)
-- ⚠️ [Honest limits](#-honest-limits)
+- 🧭 [Roadmap](#-roadmap)
+- 🚧 [Honest limits](#-honest-limits)
 - 🤝 [Contributing](#-contributing)
 - 📜 [License](#-license)
 
@@ -177,7 +177,7 @@ to change. The Frontend agent then treats mockup fidelity as its definition of d
 | `/oma:change "<request>"` | Change a frozen contract: impact analysis → your decision → versioned re-freeze → rework tasks |
 | `/oma:task list \| add \| close \| reassign` | Manual backlog control |
 
-## ⚙️ How it works
+## 🔧 How it works
 
 **Claude Code subagents cannot talk to each other.** Each runs in an isolated
 context and returns one text summary. OMA's entire architecture follows from
@@ -337,7 +337,7 @@ worth the most. Read the Discovery gate especially carefully; it's the cheapest
 place to catch a misunderstanding and the most expensive one to miss.
 </details>
 
-## 🗺️ Roadmap
+## 🧭 Roadmap
 
 | Milestone | Contents | Status |
 |---|---|---|
@@ -347,7 +347,7 @@ place to catch a misunderstanding and the most expensive one to miss.
 | **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` | 🚧 next |
 | **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | 📋 planned |
 
-## ⚠️ Honest limits
+## 🚧 Honest limits
 
 - OMA writes deploy configs but **never deploys**. Marketing and social agents
   write copy but **never post**. Agents commit per phase but **never push**.
