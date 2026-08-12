@@ -11,7 +11,7 @@ Architect, UX Designer, Frontend, Backend, QA, Security, DevOps, SEO, Marketer,
 Social — and stops at a gate after every phase for your approval.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.0-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.5.1-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://docs.claude.com/en/docs/claude-code/plugins)
 [![Agents](https://img.shields.io/badge/agents-12%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-3FA6A0.svg?style=flat-square)](#-contributing)
@@ -441,12 +441,33 @@ place to catch a misunderstanding and the most expensive one to miss.
 | **M2** | Discovery / Architecture / Design phases, gates, contract freeze, mockup pipeline | ✅ shipped |
 | **M3** | Build (Frontend ∥ Backend) + QA verification loop + `/oma:change` + `/oma:task` | ✅ shipped · validated end-to-end |
 | **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` + the deploy guard | ✅ shipped · validated end-to-end² |
-| **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | ✅ shipped · not yet validated³ |
+| **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | ✅ shipped · validated³ |
+| **M6** | Distribution — worked example in-repo, troubleshooting guide | 🚧 partial⁴ |
 
-³ The archaeologist, the `00-archaeology` phase, the three scope modes and the
-audit guard are built, and the guard is behaviorally tested (10 cases: source
-writes denied in `audit`, `.oma/` writes allowed, inactive in every other mode).
-It has not yet been run against a real existing codebase.
+³ Validated against **ground truth**: the Ledgerly application was stripped of
+every artifact OMA wrote — `.oma/`, `CLAUDE.md`, the README, git history, and
+every agent attribution left in a comment — and handed to the archaeologist as a
+codebase it had never seen. Scored against the originals it could not read:
+
+| | |
+|---|---|
+| API endpoints | **17/17 found**, 0 invented — verified by calling each one live |
+| Data model | **5/5 entities, 24/24 scalar fields**, `BigInt` money columns correctly identified |
+| Stack versions | **10/10 correct**, taken from the lockfile |
+| Source files modified | **0** |
+
+It also found two things the originals got wrong: a `GET /health` endpoint that
+exists in the code but was never added to the frozen API contract, and — the one
+that matters — that **a fresh clone of the project does not work**. The generated
+database client is gitignored with no `postinstall`, so 91 of 191 tests fail
+until `db:generate` is run by hand. The ship report had called the project green,
+because it was green in a working directory that already had the generated code.
+The audit guard is separately tested at the script level (10 cases).
+
+⁴ The README and the marketplace listing are done. Still missing: a **worked
+example** committed to this repo — so you can read a real filled-in `.oma/`
+before installing anything — and a **troubleshooting guide** for the failure
+modes that are normal at this scale.
 
 ² Phases 06–08 were run end-to-end on the same real project as M3, taking it
 from a green build to a tagged `oma/ship`. The security agent ran real

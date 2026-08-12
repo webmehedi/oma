@@ -14,8 +14,25 @@ has and a subagent doesn't. You do this work yourself.
 
 ## Step 1 — the final verification run
 
-Run the full pipeline yourself, now, on the current tree: install → typecheck →
-lint → build → test. Record real exit codes.
+Run the full pipeline yourself, now: install → typecheck → lint → build → test.
+Record real exit codes.
+
+**Verify from clean, not from the working tree.** A directory that has been
+built in for days accumulates state — generated clients, caches, artifacts that
+are gitignored and therefore absent from a fresh clone. "It passes here" is not
+the claim the ship report makes; the claim is that *someone else can clone this
+and run it*. So:
+
+```bash
+git clone . /tmp/ship-check && cd /tmp/ship-check && <install> && <the pipeline>
+```
+
+If the clean clone fails where the working tree passed, that gap **is** the
+finding — usually a generated artifact that is gitignored with no `postinstall`
+step to recreate it. File it, fix it before shipping, and never paper over it by
+reporting the working tree's result. This exact defect survived a full
+greenfield run undetected and was only caught later by the archaeologist reading
+the project as a stranger.
 
 This is not redundant with QA. Growth changed source, the harden round changed
 source, and the last full pipeline run was several dispatches ago. **A ship

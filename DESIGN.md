@@ -643,7 +643,16 @@ Opinionation is the point. Agent prompts can reference concrete APIs and idioms,
 | **M2 — Spec phases** | PM, Architect, UX agents + Discovery/Architecture/Design phases + gates + contract freeze + **the mockup pipeline** | Proves the gate + handoff mechanism on cheap phases, and gets you something to look at early |
 | **M3 — Build & QA** | Frontend, Backend, QA agents + parallel build + the repair loop + hooks | The hard part and the real risk. Test on a real sample idea before going further |
 | **M4 — Ops & Growth** | DevOps, Security, SEO, Marketer, Social + `/oma:ship` + the deploy guard | Additive; each is independent |
-| **M5 — Distribution** | README, marketplace listing, worked example, troubleshooting | — |
+| **M5 — Brownfield** | `oma-archaeologist` + `00-archaeology` + scope modes + the audit guard | Inherits all the machinery above; only safe to build once that machinery is proven |
+| **M6 — Distribution** | README, marketplace listing, worked example, troubleshooting | — |
+
+*Renumbered 2026-08-13.* Brownfield was specified in §18 as "post-v1" and built
+as M5 once M4 was validated, which displaced the original M5. Distribution is
+now M6, and two of its four items are still outstanding: a **worked example**
+committed to the repo (the validation project lives in a scratch directory and
+is lost when the session ends) and a **troubleshooting guide** for the failure
+modes that are normal at this scale — agents dying mid-dispatch, a phase stuck
+at `blocked`, resuming after a week away.
 
 **M4 status: built and validated (v0.4.1).** Phases 06-devops, 07-growth and 08-ship ship
 playbooks; the five agents, six artifact templates, the `harden` task stage,
@@ -734,9 +743,21 @@ system rather than a promise in a prompt. The estimate above held: one agent and
 one phase, plus the mode plumbing through init/run/gate/status and brownfield
 sections in the playbooks whose behavior genuinely changes (01, 04, 05, 06, 08).
 
-Not yet validated against a real existing codebase. The audit guard is
-behaviorally tested (10 cases); the reconstruction quality — which is the whole
-risk of this mode — has not been measured on someone else's repository.
+**Validated 2026-08-13 against ground truth.** The Ledgerly application was
+stripped of `.oma/`, `CLAUDE.md`, the README, git history and every agent
+attribution in a comment, then handed to the archaeologist as an unfamiliar
+codebase. Scored against the originals: 17/17 API operations (verified by calling
+them, not by reading), 5/5 entities and 24/24 scalar fields, 10/10 lockfile
+versions, zero source files modified. It documented four self-contradictions in
+the codebase without resolving any of them, and marked 17 artifacts `inferred`.
+
+Two findings the greenfield run had missed: an endpoint present in code but
+absent from the frozen contract, and a repository that does not work from a
+fresh clone — the generated database client is gitignored with no `postinstall`,
+so most tests fail until a manual step is run. The ship report had called it
+green because the working directory already had the generated code. **Consequence
+for the design: ship-time verification must install from clean, not trust the
+working tree.**
 
 ---
 
