@@ -645,12 +645,21 @@ Opinionation is the point. Agent prompts can reference concrete APIs and idioms,
 | **M4 — Ops & Growth** | DevOps, Security, SEO, Marketer, Social + `/oma:ship` + the deploy guard | Additive; each is independent |
 | **M5 — Distribution** | README, marketplace listing, worked example, troubleshooting | — |
 
-**M4 status: built (v0.4.0).** Phases 06-devops, 07-growth and 08-ship ship
+**M4 status: built and validated (v0.4.1).** Phases 06-devops, 07-growth and 08-ship ship
 playbooks; the five agents, six artifact templates, the `harden` task stage,
 `state.security` / `state.ship`, and the deploy-guard hook are in place. Not yet
 validated end-to-end on a real project the way M3 was — the mechanisms are
 individually sound and the deploy guard is behaviorally tested, but the phases
 have not been run against a live build.
+
+*Updated after the M4 validation run:* phases 06–08 were run end to end on the
+Ledgerly project through to a tagged `oma/ship`. Two defects were found and
+fixed — `state.security` missing on projects initialized before 0.4.0, and the
+Growth phase introducing an environment variable that nothing re-checked against
+`env.template`. The security agent was mutation-tested with an injected IDOR and
+caught it, graded it correctly, and filed it. The harden loop's *dispatch* step
+remains unexercised, because the application had no critical or high findings of
+its own.
 
 **M3 is where this succeeds or fails.** Everything before it is document generation, which Claude does reliably. I'd validate M3 against a real project (e.g. "invoicing app for freelancers") and only build M4 once the loop reliably produces a green build.
 

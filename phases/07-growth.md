@@ -79,7 +79,21 @@ user's trust. Note the skip in the gate summary.
    REQ in the QA coverage table. A claim that traces to nothing is a fabricated
    feature; send it back and say which one. Also confirm nothing on `scope.md`'s
    out-of-scope list is implied anywhere in the copy.
-4. **No fabricated proof.** Grep the growth artifacts for testimonial-shaped
+4. **Re-check env completeness — Growth can add environment variables.** This
+   phase writes source, and SEO in particular needs a public site URL that must
+   be present at *build* time. Re-run the phase-06 check:
+
+   ```bash
+   grep -rhoE 'process\.env\.[A-Z_][A-Z0-9_]*' src app 2>/dev/null | sed 's/process\.env\.//' | sort -u
+   ```
+
+   Every variable must appear in `.oma/06-devops/env.template` **and** the
+   runbook's environment table. A variable added here and missed is invisible
+   until the user's first deploy, where it fails silently rather than loudly:
+   canonicals, OG URLs and the sitemap all ship pointing at `localhost`. File
+   any gap as a task for `oma-devops` — do not patch the template yourself.
+
+5. **No fabricated proof.** Grep the growth artifacts for testimonial-shaped
    content, user counts, revenue figures and star ratings. Anything unsourced
    must be a `[[TODO]]`, not a number.
 5. **Calendar completeness:** every row in `social-calendar.md` has a real draft

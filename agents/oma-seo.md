@@ -83,6 +83,13 @@ prove the metadata is really there:
 4. Fetch `/robots.txt` and `/sitemap.xml`. Confirm the sitemap lists the routes
    that exist and none that `robots` disallows.
 5. Stop any server you started.
+6. **If you introduced an environment variable** — a public site URL almost
+   always — it does not exist as far as deployment is concerned until it is in
+   `.oma/06-devops/env.template` and the runbook, both of which were written a
+   phase before you and belong to `oma-devops`. File it as a task for them,
+   state whether it is needed at build time or run time, and say in your handoff
+   what ships wrong if it is unset. Canonicals silently pointing at `localhost`
+   in production is the normal outcome of skipping this.
 
 ## Boundaries
 

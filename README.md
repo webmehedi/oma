@@ -11,7 +11,7 @@ Architect, UX Designer, Frontend, Backend, QA, Security, DevOps, SEO, Marketer,
 Social — and stops at a gate after every phase for your approval.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.4.1-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://docs.claude.com/en/docs/claude-code/plugins)
 [![Agents](https://img.shields.io/badge/agents-11%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-3FA6A0.svg?style=flat-square)](#-contributing)
@@ -48,10 +48,10 @@ Three things make it different from "ask an AI to build my app":
    "the tests pass" is checkable against reality — and in validation, that's
    exactly what caught nine tasks marked done against tests that never existed.
 
-> **Status: M4.** All eight phases are implemented, Intake through Ship.
-> Discovery → QA is **validated end-to-end on a real project**; DevOps, Growth
-> and Ship are new in v0.4.0 and not yet proven on a full run — see the
-> [Roadmap](#-roadmap).
+> **Status: M4, validated.** All eight phases are implemented *and* proven
+> end-to-end on a real project — one idea taken from a blank directory to a
+> tagged `oma/ship` with a tested application, a security review, CI, a deploy
+> runbook and launch material. See [Proven on a real project](#-proven-on-a-real-project).
 
 ## 📑 Table of contents
 
@@ -113,7 +113,7 @@ next action. Close your laptop mid-project, come back next week, continue.
 
 ## 🚦 The pipeline
 
-<img src="assets/pipeline.svg" alt="OMA phase pipeline: Discovery, Architecture, Design, Build and QA, each ending at a human approval gate, with contracts freezing at the Architecture and Design gates and a bounded repair loop running from QA back to Build" width="100%">
+<img src="assets/pipeline.svg" alt="OMA phase pipeline: Discovery, Architecture, Design, Build, QA, DevOps, Growth and Ship, each ending at a human approval gate, with contracts freezing at the Architecture and Design gates and bounded repair loops running from QA and Security back to Build" width="100%">
 
 | # | Phase | Agent(s) | Produces | Freezes |
 |---|---|---|---|---|
@@ -273,6 +273,31 @@ Four defects found in that run are fixed in v0.3.1, including the one that
 matters most: **build slices must be ≤ ~2 tasks**, because a 3-task slice
 exhausts an agent's context and kills it.
 
+### Phases 06–08, validated separately
+
+The same project was then taken through DevOps, Growth and Ship:
+
+- **The security agent probes, it doesn't read.** It ran a cross-user
+  authorization check — 11 operations as user B against user A's records — and
+  got 404 on all 11 with the data byte-identical. It also measured a **timing
+  oracle**: sign-in responses fell into non-overlapping bands (3.3–8.9 ms vs
+  18.9–20.9 ms) that reveal whether an email is registered.
+- **Then it was mutation-tested.** A deliberate IDOR was injected into the data
+  layer. The agent found it, located the exact lines, reproduced it, graded it
+  `high`, filed it as a `harden` task — and separately noted that the existing
+  unit tests passed 14/14 *with the hole open*, because none covered that path.
+- **DevOps found the container never booted.** `docker build` exited 0 while the
+  first `migrate deploy` died on a pruned package. It fixed the prune and added
+  a build-time boot proof so a future regression fails the build instead of the
+  user's first deploy.
+- **The three growth agents ran concurrently** over disjoint files, all three
+  handoffs landing intact in the shared log.
+- **The orchestrator's own verification caught a defect the agents missed:**
+  Growth introduced a build-time environment variable that phase 06's
+  `env.template` — written a phase earlier — knew nothing about. Unfixed, every
+  canonical URL and sitemap entry ships pointing at `localhost`. Fixed in v0.4.1
+  by re-checking env completeness after Growth.
+
 ## 🧱 The default stack
 
 Opinionated, and overridable at intake (`/oma:init` asks). Output quality is
@@ -361,14 +386,20 @@ place to catch a misunderstanding and the most expensive one to miss.
 | **M1** | State, handoff bus, hooks, `init` / `status` | ✅ shipped |
 | **M2** | Discovery / Architecture / Design phases, gates, contract freeze, mockup pipeline | ✅ shipped |
 | **M3** | Build (Frontend ∥ Backend) + QA verification loop + `/oma:change` + `/oma:task` | ✅ shipped · validated end-to-end |
-| **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` + the deploy guard | ✅ shipped · not yet validated end-to-end² |
+| **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` + the deploy guard | ✅ shipped · validated end-to-end² |
 | **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | 📋 planned |
 
-² The five agents, three phase playbooks and six artifact templates are in
-place, and the deploy guard is behaviorally tested (27 cases: deploys denied,
-`git push` asks, ordinary builds untouched). What hasn't happened yet is a full
-run of Discovery→Ship on a real project the way M3 was proven. Expect rough
-edges in phases 06–08 until that run happens.
+² Phases 06–08 were run end-to-end on the same real project as M3, taking it
+from a green build to a tagged `oma/ship`. The security agent ran real
+cross-user authorization probes (11 operations); the three growth agents ran
+concurrently over disjoint files with no lost handoffs; the ship report
+assembled from state with no invented numbers. Two defects found in that run
+are fixed in v0.4.1. The security review was then **mutation-tested**: a
+deliberate IDOR was injected into the data layer, and the agent located it,
+graded it `high`, reproduced it, and filed it as a `harden` task — while also
+noting that the existing unit tests passed with the hole open. The deploy guard
+is behaviorally tested at the script level (27 cases); it has not been exercised
+through an installed plugin session.
 
 ## 🚧 Honest limits
 

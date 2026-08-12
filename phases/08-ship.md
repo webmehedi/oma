@@ -83,6 +83,7 @@ Assemble from state and artifacts — every number cited, none estimated:
 
 ## Step 4 — close the loop
 
+0. If `state.ship` is absent (project initialized by OMA < 0.4.0), create it.
 1. Rewrite `CLAUDE.md` from the template — final state, no phase in flight.
 2. Set `state.ship`: `at`, `report` path, and the final pipeline verdicts.
 3. Set `phase.status = "awaiting_gate"`.

@@ -25,6 +25,12 @@ paths in your role file are relative to it, and ${CLAUDE_PLUGIN_ROOT} is the
 installed OMA plugin directory.
 ```
 
+## Before Stage A — state shape
+
+If `state.security` is absent (the project was initialized by OMA < 0.4.0),
+write it first with `review_iteration: 0` and zeroed counts. Every reference to
+`state.security.*` below assumes it exists. Same for `state.ship` at phase 08.
+
 ## Stage A — security review
 
 Dispatch **oma-security**, foreground:
