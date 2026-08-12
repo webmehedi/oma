@@ -12,8 +12,8 @@ Frontend, Backend, QA — and stops at a gate after every phase for your approva
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.3.1-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://docs.claude.com/en/docs/claude-code/plugins)
-[![Agents](https://img.shields.io/badge/agents-6%20shipping%20·%205%20planned-8FA3B4.svg?style=flat-square)](#the-team)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-3FA6A0.svg?style=flat-square)](#contributing)
+[![Agents](https://img.shields.io/badge/agents-6%20shipping%20·%205%20planned-8FA3B4.svg?style=flat-square)](#-the-team)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-3FA6A0.svg?style=flat-square)](#-contributing)
 
 *You are the one-person company. OMA is your team.*
 
@@ -21,7 +21,7 @@ Frontend, Backend, QA — and stops at a gate after every phase for your approva
 
 ---
 
-## What is OMA?
+## 🎯 What is OMA?
 
 OMA is an open-source **Claude Code plugin** that turns a one-line project idea
 into a working, tested repository — the way a real software team would build it,
@@ -48,26 +48,26 @@ Three things make it different from "ask an AI to build my app":
 
 > **Status: M3.** Discovery → Architecture → Design → Build → QA are implemented
 > and **validated end-to-end on a real project**. DevOps and Growth phases land
-> in M4 — see the [Roadmap](#roadmap).
+> in M4 — see the [Roadmap](#-roadmap).
 
-## Table of contents
+## 📑 Table of contents
 
-- [Quick start](#quick-start)
-- [The pipeline](#the-pipeline)
-- [What you actually get](#what-you-actually-get)
-- [The team](#the-team)
-- [Commands](#commands)
-- [How it works](#how-it-works)
-- [Proven on a real project](#proven-on-a-real-project)
-- [The default stack](#the-default-stack)
-- [Requirements](#requirements)
-- [FAQ](#faq)
-- [Roadmap](#roadmap)
-- [Honest limits](#honest-limits)
-- [Contributing](#contributing)
-- [License](#license)
+- 🚀 [Quick start](#-quick-start)
+- 🚦 [The pipeline](#-the-pipeline)
+- 📦 [What you actually get](#-what-you-actually-get)
+- 👥 [The team](#-the-team)
+- ⚡ [Commands](#-commands)
+- ⚙️ [How it works](#-how-it-works)
+- 🧪 [Proven on a real project](#-proven-on-a-real-project)
+- 🧱 [The default stack](#-the-default-stack)
+- 📋 [Requirements](#-requirements)
+- ❓ [FAQ](#-faq)
+- 🗺️ [Roadmap](#-roadmap)
+- ⚠️ [Honest limits](#-honest-limits)
+- 🤝 [Contributing](#-contributing)
+- 📜 [License](#-license)
 
-## Quick start
+## 🚀 Quick start
 
 **Install** — inside Claude Code:
 
@@ -108,7 +108,7 @@ python3 -m http.server 4173 -d .oma/03-design/mockups
 Lost the thread? `/oma:status` tells you where the project stands and the exact
 next action. Close your laptop mid-project, come back next week, continue.
 
-## The pipeline
+## 🚦 The pipeline
 
 <img src="assets/pipeline.svg" alt="OMA phase pipeline: Discovery, Architecture, Design, Build and QA, each ending at a human approval gate, with contracts freezing at the Architecture and Design gates and a bounded repair loop running from QA back to Build" width="100%">
 
@@ -124,7 +124,7 @@ next action. Close your laptop mid-project, come back next week, continue.
 Each phase ends at a gate, commits its work, and tags it (`oma/gate-03-design`),
 so every phase of your project's history is a checkpoint you can diff or roll back to.
 
-## What you actually get
+## 📦 What you actually get
 
 Not a chat log. A repository, plus the paper trail a real team would have left:
 
@@ -153,7 +153,7 @@ five states per screen (empty, loading, populated, error, edge), and real
 content instead of lorem ipsum. Approve the interface *before* it's expensive
 to change. The Frontend agent then treats mockup fidelity as its definition of done.
 
-## The team
+## 👥 The team
 
 | Agent | Role | Ships in |
 |---|---|---|
@@ -165,7 +165,7 @@ to change. The Frontend agent then treats mockup fidelity as its definition of d
 | `oma-qa` | Runs real commands, judges against acceptance criteria, **files — never fixes** | ✅ v0.3 |
 | `oma-security` · `oma-devops` · `oma-seo` · `oma-marketer` · `oma-social` | Threat review, CI/CD, technical SEO, launch copy, content calendar | 🚧 M4 |
 
-## Commands
+## ⚡ Commands
 
 | Command | Does |
 |---|---|
@@ -177,7 +177,7 @@ to change. The Frontend agent then treats mockup fidelity as its definition of d
 | `/oma:change "<request>"` | Change a frozen contract: impact analysis → your decision → versioned re-freeze → rework tasks |
 | `/oma:task list \| add \| close \| reassign` | Manual backlog control |
 
-## How it works
+## ⚙️ How it works
 
 **Claude Code subagents cannot talk to each other.** Each runs in an isolated
 context and returns one text summary. OMA's entire architecture follows from
@@ -221,7 +221,7 @@ flowchart TD
 
 Full architecture and rationale: **[DESIGN.md](DESIGN.md)**.
 
-## Proven on a real project
+## 🧪 Proven on a real project
 
 OMA was validated end-to-end by building **Ledgerly**, a freelancer invoicing
 app, from a single sentence through to a green test suite. Not a demo — a real
@@ -256,7 +256,7 @@ Four defects found in that run are fixed in v0.3.1, including the one that
 matters most: **build slices must be ≤ ~2 tasks**, because a 3-task slice
 exhausts an agent's context and kills it.
 
-## The default stack
+## 🧱 The default stack
 
 Opinionated, and overridable at intake (`/oma:init` asks). Output quality is
 strongest on the default:
@@ -269,13 +269,13 @@ set that composes**, and proves it in a throwaway install (install → typecheck
 lint → build, all green) *before* the stack freezes. That rule exists because
 the naive approach hit two real incompatibilities in validation and cost an hour.
 
-## Requirements
+## 📋 Requirements
 
 - [Claude Code](https://claude.com/claude-code) (any recent version with plugin support)
 - `git`, `python3` (hook scripts), and `node` + `npm` for the default web stack
 - macOS or Linux (hook scripts are bash)
 
-## FAQ
+## ❓ FAQ
 
 <details>
 <summary><b>How is this different from just asking Claude to build my app?</b></summary>
@@ -337,7 +337,7 @@ worth the most. Read the Discovery gate especially carefully; it's the cheapest
 place to catch a misunderstanding and the most expensive one to miss.
 </details>
 
-## Roadmap
+## 🗺️ Roadmap
 
 | Milestone | Contents | Status |
 |---|---|---|
@@ -347,7 +347,7 @@ place to catch a misunderstanding and the most expensive one to miss.
 | **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` | 🚧 next |
 | **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | 📋 planned |
 
-## Honest limits
+## ⚠️ Honest limits
 
 - OMA writes deploy configs but **never deploys**. Marketing and social agents
   write copy but **never post**. Agents commit per phase but **never push**.
@@ -358,7 +358,7 @@ place to catch a misunderstanding and the most expensive one to miss.
 - This is a young project — v0.3.1, validated on one full build. Expect rough
   edges, and please [file them](../../issues).
 
-## Contributing
+## 🤝 Contributing
 
 Issues and pull requests are welcome — especially validation runs on project
 types other than a CRUD web app, which is where the sharpest edges hide.
@@ -373,7 +373,7 @@ Read [DESIGN.md](DESIGN.md) first if you're changing anything about state,
 handoffs, or the freeze mechanism — those three carry the invariants everything
 else depends on.
 
-## License
+## 📜 License
 
 [MIT](LICENSE) © 2026 [Coder71 Limited](https://github.com/webmehedi)
 
