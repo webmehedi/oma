@@ -45,7 +45,8 @@ as an assumption in the brief.
 ├── brief.md
 ├── 01-discovery/  02-architecture/  02-architecture/adr/
 ├── 03-design/  03-design/screens/  03-design/mockups/
-├── 04-build/  05-qa/  05-qa/reports/  06-devops/  07-growth/
+├── 04-build/  05-qa/  05-qa/reports/  06-devops/
+├── 07-growth/  07-growth/posts/  08-ship/
 └── log/
 ```
 
@@ -71,6 +72,7 @@ Write **`.oma/state.json`** conforming to `${CLAUDE_PLUGIN_ROOT}/templates/state
   },
   "decisions": [], "open_questions": [],
   "qa": { "last_run": null, "install": null, "typecheck": null, "lint": null, "build": null, "test": null, "open_failures": 0, "loop_iteration": 0 },
+  "security": { "last_review": null, "critical": 0, "high": 0, "medium": 0, "low": 0, "open_findings": 0, "audit": null, "review_iteration": 0 },
   "handoff_seq": 0
 }
 ```
@@ -87,7 +89,7 @@ it never pushes). Respect their answer.
 ## 3. Hand back
 
 Print a compact summary: project name, one-liner, stack, and the phase map
-(Discovery → Architecture → Design → Build → QA → DevOps → Growth → Ship) with
-a note that this plugin version implements through Design. End with exactly:
+(Discovery → Architecture → Design → Build → QA → DevOps → Growth → Ship),
+noting that every phase stops at a gate you approve. End with exactly:
 
 > Next: `/oma:run` to start Discovery.

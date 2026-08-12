@@ -25,14 +25,14 @@
           },
           "title": { "type": "string", "maxLength": 140 },
           "owner": {
-            "enum": ["oma-frontend", "oma-backend", "oma-qa", "oma-devops", "user"]
+            "enum": ["oma-frontend", "oma-backend", "oma-qa", "oma-security", "oma-devops", "oma-seo", "oma-marketer", "oma-social", "user"]
           },
           "status": {
             "enum": ["todo", "in_progress", "done", "blocked", "wontfix"]
           },
           "stage": {
-            "enum": ["foundation", "feature", "fix"],
-            "description": "foundation = sequential scaffold work; feature = parallel-safe; fix = QA-filed repair."
+            "enum": ["foundation", "feature", "fix", "harden"],
+            "description": "foundation = sequential scaffold work; feature = parallel-safe; fix = QA-filed repair; harden = security-filed repair, dispatched in the DevOps phase."
           },
           "depends_on": {
             "type": "array",

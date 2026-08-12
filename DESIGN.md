@@ -360,10 +360,19 @@ Every phase has: a **trigger**, a set of **agents**, **required artifacts**, and
 | 2 | **Architecture** | Architect, then Security (design review) | `stack.md` (with compatibility proof), `data-model.md`, `api-contract.yaml`, `adr/` | You approve the stack and data model. **`stack` + `data_model` freeze here.** |
 | 3 | **Design** | UX Designer | `design-system.md`, `tokens.json`, `motion-spec.md`, `components.md`, `screens/`, **`mockups/` (runnable HTML)** | You open the mockups in a browser and approve. **Contracts freeze here.** |
 | 4 | **Build** | Frontend ∥ Backend | working code, `tasks.json` all `done` | build passes (checked, not claimed) |
-| 5 | **QA** | QA, Security | `reports/run-N.md`, `security-review.md` | tests green or you accept known failures |
-| 6 | **DevOps** | DevOps | Dockerfile, CI config, `deploy-runbook.md`, `env.template` | You approve the deploy plan |
+| 5 | **QA** | QA | `reports/run-N.md` | tests green or you accept known failures |
+| 6 | **DevOps** | Security, then DevOps | `security-review.md`, Dockerfile, CI config, `deploy-runbook.md`, `env.template` | You approve the security posture and the deploy plan |
 | 7 | **Growth** | SEO ∥ Marketer ∥ Social | `seo-brief.md` + implemented metadata, `landing-copy.md`, `social-calendar.md` | You approve |
-| 8 | **Ship** | — (main thread) | `README.md`, handoff report | done |
+| 8 | **Ship** | — (main thread) | project `README.md`, `ship-report.md` | done |
+
+**Security moved to phase 6 during M4.** It was specified to run in phases 2 and
+5. In practice it needs two things phase 5 can't offer: a *running* application
+to probe (its highest-value finding class — cross-user authorization — is only
+provable against a live instance), and a position *before* the deploy configs,
+because headers, secret handling and container hardening are inputs to what
+DevOps writes. Reviewing after the runbook exists means writing the runbook
+twice. Its findings still route back to the build agents as `harden` tasks in a
+bounded 2-round loop, which is the phase-5 loop shape applied one phase later.
 
 ### Parallelism
 
@@ -562,8 +571,17 @@ All in `hooks/hooks.json`, because plugin agents ignore agent-level hooks.
 | `PreToolUse` | `Write\|Edit` | **Contract freeze guard.** Deny writes to frozen contracts |
 | `PreToolUse` | `Write\|Edit` | **Boundary guard.** Warn when an agent writes outside its declared ownership |
 | `PostToolUse` | `Bash` | Record command + exit code to `.oma/log/commands.jsonl` for QA anti-fabrication |
+| `PreToolUse` | `Bash` | **Deploy guard.** Deny deploy/publish commands; ask on `git push` and remote repo creation (M4) |
 | `SubagentStop` | — | Verify the agent appended a handoff record; if not, flag it |
 | `Stop` | — | If phase status changed, print the next suggested command |
+
+The deploy guard is what makes "OMA does not deploy" a property of the system
+rather than a promise in a prompt. It is active only inside an OMA project, it
+denies production-affecting commands outright (`vercel deploy`, `fly deploy`,
+`docker push`, `npm publish`, `terraform apply`, `kubectl apply`, …), and it
+*asks* rather than denies on `git push` and `gh repo create` — publishing the
+user's own source is a reasonable thing for them to want and an unreasonable
+thing for an agent to decide alone. Like every other hook it fails open.
 
 ---
 
@@ -624,8 +642,15 @@ Opinionation is the point. Agent prompts can reference concrete APIs and idioms,
 | **M1 — Skeleton** | `plugin.json`, `marketplace.json`, `state.json` schema, handoff schema, `/oma:init`, `/oma:status` | Nothing works until state and the bus exist |
 | **M2 — Spec phases** | PM, Architect, UX agents + Discovery/Architecture/Design phases + gates + contract freeze + **the mockup pipeline** | Proves the gate + handoff mechanism on cheap phases, and gets you something to look at early |
 | **M3 — Build & QA** | Frontend, Backend, QA agents + parallel build + the repair loop + hooks | The hard part and the real risk. Test on a real sample idea before going further |
-| **M4 — Ops & Growth** | DevOps, Security, SEO, Marketer, Social + `/oma:ship` | Additive; each is independent |
+| **M4 — Ops & Growth** | DevOps, Security, SEO, Marketer, Social + `/oma:ship` + the deploy guard | Additive; each is independent |
 | **M5 — Distribution** | README, marketplace listing, worked example, troubleshooting | — |
+
+**M4 status: built (v0.4.0).** Phases 06-devops, 07-growth and 08-ship ship
+playbooks; the five agents, six artifact templates, the `harden` task stage,
+`state.security` / `state.ship`, and the deploy-guard hook are in place. Not yet
+validated end-to-end on a real project the way M3 was — the mechanisms are
+individually sound and the deploy guard is behaviorally tested, but the phases
+have not been run against a live build.
 
 **M3 is where this succeeds or fails.** Everything before it is document generation, which Claude does reliably. I'd validate M3 against a real project (e.g. "invoicing app for freelancers") and only build M4 once the loop reliably produces a green build.
 

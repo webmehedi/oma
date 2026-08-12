@@ -5,14 +5,15 @@
 # OMA — One Man Army
 
 **A full SDLC team of AI agents inside [Claude Code](https://claude.com/claude-code).**
-Give it a project idea; it runs Discovery → Architecture → Design → Build → QA
-with role-specialized agents — Project Manager, Architect, UX Designer,
-Frontend, Backend, QA — and stops at a gate after every phase for your approval.
+Give it a project idea; it runs Discovery → Architecture → Design → Build → QA →
+DevOps → Growth → Ship with role-specialized agents — Project Manager,
+Architect, UX Designer, Frontend, Backend, QA, Security, DevOps, SEO, Marketer,
+Social — and stops at a gate after every phase for your approval.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.1-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.4.0-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://docs.claude.com/en/docs/claude-code/plugins)
-[![Agents](https://img.shields.io/badge/agents-6%20shipping%20·%205%20planned-8FA3B4.svg?style=flat-square)](#-the-team)
+[![Agents](https://img.shields.io/badge/agents-11%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-3FA6A0.svg?style=flat-square)](#-contributing)
 
 *You are the one-person company. OMA is your team.*
@@ -27,11 +28,12 @@ OMA is an open-source **Claude Code plugin** that turns a one-line project idea
 into a working, tested repository — the way a real software team would build it,
 not the way a single chat session flails at it.
 
-It is a **multi-agent SDLC pipeline**: eleven role-specialized AI agents
-(project manager, software architect, UI/UX designer, frontend developer,
-backend developer, QA engineer, and — in progress — security, DevOps, SEO,
-marketing and social agents) that coordinate through **durable on-disk state**
-instead of conversation. Sessions are disposable. The project isn't.
+It is a **multi-agent SDLC pipeline**: eleven role-specialized AI agents —
+project manager, software architect, UI/UX designer, frontend developer,
+backend developer, QA engineer, security engineer, DevOps engineer, SEO
+specialist, marketer and social media manager — that coordinate through
+**durable on-disk state** instead of conversation. Sessions are disposable.
+The project isn't.
 
 Three things make it different from "ask an AI to build my app":
 
@@ -46,9 +48,10 @@ Three things make it different from "ask an AI to build my app":
    "the tests pass" is checkable against reality — and in validation, that's
    exactly what caught nine tasks marked done against tests that never existed.
 
-> **Status: M3.** Discovery → Architecture → Design → Build → QA are implemented
-> and **validated end-to-end on a real project**. DevOps and Growth phases land
-> in M4 — see the [Roadmap](#-roadmap).
+> **Status: M4.** All eight phases are implemented, Intake through Ship.
+> Discovery → QA is **validated end-to-end on a real project**; DevOps, Growth
+> and Ship are new in v0.4.0 and not yet proven on a full run — see the
+> [Roadmap](#-roadmap).
 
 ## 📑 Table of contents
 
@@ -119,7 +122,9 @@ next action. Close your laptop mid-project, come back next week, continue.
 | 03 | **Design** | UX Designer | Design system, `tokens.json`, motion spec, **runnable HTML/CSS mockups** | api, tokens, motion |
 | 04 | **Build** | Frontend ∥ Backend | Working application code, in parallel, against frozen contracts | — |
 | 05 | **QA** | QA Engineer | Test plan, real command runs, failures filed back as tasks | — |
-| 06 | DevOps · Growth | *M4* | CI/CD configs, security review, SEO, launch copy | — |
+| 06 | **DevOps** | Security, then DevOps | Security review with real probes, CI, Dockerfile, `env.template`, deploy runbook | — |
+| 07 | **Growth** | SEO ∥ Marketer ∥ Social | Metadata/sitemap/JSON-LD **in the code**, positioning, landing copy, launch plan, 30-day calendar | — |
+| 08 | **Ship** | *(no agents)* | Ship-time verification run, the project's README, the ship report | — |
 
 Each phase ends at a gate, commits its work, and tags it (`oma/gate-03-design`),
 so every phase of your project's history is a checkpoint you can diff or roll back to.
@@ -141,10 +146,17 @@ your-project/
     │   └── mockups/            #   runnable HTML — open it in a browser
     ├── 04-build/tasks.json     # the backlog — every task cites a REQ
     ├── 05-qa/                  # test plan + evidence-based run reports
+    ├── 06-devops/              # security-review.md, deploy-runbook.md, env.template
+    ├── 07-growth/              # seo-brief, positioning, landing-copy, launch-plan
+    │   └── posts/              #   drafted social posts, one file each
+    ├── 08-ship/ship-report.md  # what shipped, what didn't, what's known-broken
     └── log/
         ├── handoffs.jsonl      # the message bus — how agents talk
         └── commands.jsonl      # every command + exit code — the anti-fabrication trail
 ```
+
+Plus, in the repository proper: `Dockerfile`, `.github/workflows/ci.yml`, the
+SEO metadata in your routes, and a `README.md` written at ship time.
 
 **The mockups are the headline.** Before a single line of application code
 exists, you get real HTML/CSS you can click through — with production-grade
@@ -163,7 +175,11 @@ to change. The Frontend agent then treats mockup fidelity as its definition of d
 | `oma-frontend` | UI implementation at mockup fidelity, against the frozen API contract | ✅ v0.3 |
 | `oma-backend` | Schema, migrations, endpoints, business logic, tests | ✅ v0.3 |
 | `oma-qa` | Runs real commands, judges against acceptance criteria, **files — never fixes** | ✅ v0.3 |
-| `oma-security` · `oma-devops` · `oma-seo` · `oma-marketer` · `oma-social` | Threat review, CI/CD, technical SEO, launch copy, content calendar | 🚧 M4 |
+| `oma-security` | Probes the running app for broken authorization, secrets, injection, weak sessions; files findings by severity | ✅ v0.4 |
+| `oma-devops` | CI, multi-stage container, env template, deploy runbook — each proven locally before handoff | ✅ v0.4 |
+| `oma-seo` | Metadata, canonical URLs, sitemap, robots, JSON-LD **written into the codebase**, plus the keyword brief | ✅ v0.4 |
+| `oma-marketer` | Positioning, landing copy, launch plan — every claim traced to a shipped requirement | ✅ v0.4 |
+| `oma-social` | 30-day calendar and the actual post drafts, in each platform's real format | ✅ v0.4 |
 
 ## ⚡ Commands
 
@@ -176,6 +192,7 @@ to change. The Frontend agent then treats mockup fidelity as its definition of d
 | `/oma:phase <name> "<corrections>"` | Deliberately re-run a phase (e.g. redesign) |
 | `/oma:change "<request>"` | Change a frozen contract: impact analysis → your decision → versioned re-freeze → rework tasks |
 | `/oma:task list \| add \| close \| reassign` | Manual backlog control |
+| `/oma:ship` | Final assembly: ship-time verification run, project README, ship report, deploy checklist |
 
 ## 🔧 How it works
 
@@ -344,13 +361,24 @@ place to catch a misunderstanding and the most expensive one to miss.
 | **M1** | State, handoff bus, hooks, `init` / `status` | ✅ shipped |
 | **M2** | Discovery / Architecture / Design phases, gates, contract freeze, mockup pipeline | ✅ shipped |
 | **M3** | Build (Frontend ∥ Backend) + QA verification loop + `/oma:change` + `/oma:task` | ✅ shipped · validated end-to-end |
-| **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` | 🚧 next |
+| **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` + the deploy guard | ✅ shipped · not yet validated end-to-end² |
 | **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | 📋 planned |
+
+² The five agents, three phase playbooks and six artifact templates are in
+place, and the deploy guard is behaviorally tested (27 cases: deploys denied,
+`git push` asks, ordinary builds untouched). What hasn't happened yet is a full
+run of Discovery→Ship on a real project the way M3 was proven. Expect rough
+edges in phases 06–08 until that run happens.
 
 ## 🚧 Honest limits
 
 - OMA writes deploy configs but **never deploys**. Marketing and social agents
   write copy but **never post**. Agents commit per phase but **never push**.
+  As of v0.4.0 this is enforced by a hook, not just asked for: inside an OMA
+  project, deploy and publish commands (`vercel deploy`, `docker push`,
+  `npm publish`, `terraform apply`, …) are denied outright, and `git push` asks
+  first. If you want to deploy, the runbook has the exact command — run it in
+  your own terminal.
 - Best results on well-scoped web applications using the default stack. Custom
   stacks work; quality is strongest on the default.
 - Agent deaths mid-dispatch are routine at this scale. Recovery is built in

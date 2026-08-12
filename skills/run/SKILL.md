@@ -30,15 +30,16 @@ The system never builds on a guess.
 
 Phase sequence: `01-discovery → 02-architecture → 03-design → 04-build → 05-qa → 06-devops → 07-growth → 08-ship`.
 
+`08-ship` is the last phase; its gate ends the project. Approving it does not
+advance to a ninth phase — say the project is complete instead.
+
 ## 3. Execute the phase
 
 Read the playbook: `${CLAUDE_PLUGIN_ROOT}/phases/<phase>.md`.
 
-**If the playbook file does not exist** (phases ≥ 06 in this plugin version):
-tell the user plainly — "This version of OMA implements Intake through QA: your
-project is specified, built, and verified. DevOps and Growth phases arrive in
-the next milestone — the repo is deployable by hand meanwhile." Stop. Do not
-improvise a missing phase.
+**If the playbook file does not exist**, tell the user plainly which phase has
+no playbook in this plugin version and stop. Do not improvise a missing phase.
+(All eight phases ship playbooks as of v0.4.0.)
 
 Otherwise:
 

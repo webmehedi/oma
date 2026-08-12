@@ -45,12 +45,24 @@ nothing at a gate right now, show current status, stop.
    - From this moment the plugin's PreToolUse hook denies writes to that file.
      Tell the user which files just became read-only, in two lines.
 
+   No gate after `03-design` freezes anything — DevOps, Growth and Ship author
+   no contracts. If a contract changed during those phases, that happened
+   through `/oma:change` and is already re-frozen and re-hashed.
+
 3b. **If the phase is `05-qa` and open `fix` tasks remain** — approving over
    known failures is the user's right, but it must leave a record: move each
    still-open `fix` task in `.oma/04-build/tasks.json` to `wontfix` with the
    gate notes as the reason, and list them in your report. If the user gave no
    notes, ask one question first: "Approving with N open failures — accept
    them as known issues?" — then proceed per their answer.
+
+3c. **If the phase is `06-devops` and `state.security.open_findings > 0`** —
+   the same rule, with a higher bar. Name each open `critical`/`high` finding
+   individually and ask explicitly before recording the approval; "accept the
+   security findings" without naming them is not informed consent. On approval,
+   move the open `harden` tasks to `wontfix` with the gate notes as the reason,
+   and carry the findings into the ship report's known-issues table. A critical
+   finding must never become invisible by being approved past.
 
 4. **Rewrite `CLAUDE.md`** at the repo root from
    `${CLAUDE_PLUGIN_ROOT}/templates/claude-md.md`, now filled with current
@@ -77,5 +89,13 @@ nothing at a gate right now, show current status, stop.
 
    > Next: `/oma:run` to start `<next phase>`. (`/clear` first is recommended — state is on disk.)
 
-   If the next phase has no playbook in this plugin version, say instead that
-   the spec pipeline is complete and Build arrives in the next OMA milestone.
+   **If the phase was `08-ship`**, there is no next phase. Tag `oma/ship`
+   instead of `oma/gate-08-ship`, and close out: point at
+   `.oma/08-ship/ship-report.md`, restate that OMA has deployed nothing, and
+   give the first thing to do next from the report. Say plainly that the
+   project is complete and the repository is now an ordinary repository —
+   `/oma:change` still governs the frozen contracts, and `/oma:phase` can
+   re-run any phase against it.
+
+   If the next phase has no playbook in this plugin version, say which, and
+   what the user has in hand meanwhile.

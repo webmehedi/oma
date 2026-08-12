@@ -118,6 +118,43 @@
         "loop_iteration": { "type": "integer" }
       }
     },
+    "security": {
+      "type": "object",
+      "description": "Written by the orchestrator from oma-security's review in the DevOps phase.",
+      "properties": {
+        "last_review": { "type": ["string", "null"] },
+        "critical": { "type": "integer" },
+        "high": { "type": "integer" },
+        "medium": { "type": "integer" },
+        "low": { "type": "integer" },
+        "open_findings": {
+          "type": "integer",
+          "description": "critical + high still unfixed. Non-zero at the DevOps gate means the user is explicitly accepting them."
+        },
+        "audit": { "enum": ["pass", "fail", "warn", null] },
+        "review_iteration": { "type": "integer" }
+      }
+    },
+    "ship": {
+      "type": "object",
+      "description": "Written at 08-ship. Its presence means a ship report exists for the tree as it stood at that moment.",
+      "properties": {
+        "at": { "type": ["string", "null"] },
+        "report": { "type": ["string", "null"] },
+        "commit": { "type": ["string", "null"] },
+        "final_check": {
+          "type": "object",
+          "description": "Pipeline verdicts from the ship-time run — not copied from an earlier QA report.",
+          "properties": {
+            "install": { "enum": ["pass", "fail", "warn", null] },
+            "typecheck": { "enum": ["pass", "fail", "warn", null] },
+            "lint": { "enum": ["pass", "fail", "warn", null] },
+            "build": { "enum": ["pass", "fail", "warn", null] },
+            "test": { "enum": ["pass", "fail", "warn", null] }
+          }
+        }
+      }
+    },
     "handoff_seq": {
       "type": "integer",
       "minimum": 0,
