@@ -44,7 +44,22 @@ if s.get("mode") == "brownfield":
     scope = (s.get("brownfield") or {}).get("scope", "?")
     mode = f" · brownfield ({scope})"
 
-lines = [
+# An unattended run that halted overnight is the most important thing a fresh
+# session can be told, so it goes first and names the reason verbatim.
+auto = s.get("auto") or {}
+auto_lines = []
+if auto.get("status") == "halted":
+    auto_lines.append(
+        f"[OMA] Unattended run {auto.get('run', '?')} HALTED: {auto.get('halted_on', 'reason not recorded')}"
+        f" — nothing is lost; every approved phase is committed. Report: {auto.get('journal', '.oma/auto/')}"
+    )
+elif auto.get("status") == "running":
+    auto_lines.append(
+        f"[OMA] Unattended run {auto.get('run', '?')} is in progress"
+        f" ({auto.get('assumptions', 0)} assumptions recorded so far)."
+    )
+
+lines = auto_lines + [
     "[OMA] This project is managed by the OMA plugin (One Man Army).",
     f"[OMA] Project: {proj.get('name', '?')} — {proj.get('one_liner', '')}".rstrip(),
     f"[OMA] Phase: {phase.get('current', '?')} ({phase.get('status', '?')}) · gates approved: {approved}{mode}",

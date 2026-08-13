@@ -3,6 +3,68 @@
 All notable changes to OMA. Versions follow [semver](https://semver.org/);
 while the plugin is pre-1.0, minor versions may change behaviour.
 
+## [0.7.0] — 2026-08-13 · Unattended runs
+
+### Added
+- **`/oma:auto` — the whole pipeline with nobody watching.** One deep intake,
+  then every phase to ship without stopping at gates. Built for the case the
+  gated loop handles badly: you have the idea at 11pm and would rather read a
+  report in the morning than approve eight phases across a working day.
+
+  It front-loads the questions a normal run raises at gates (visual direction,
+  auth model, payments in v1, deploy target, demo data, what makes the run a
+  success), then captures the user's **standing answers** to the decisions gates
+  exist for as `state.auto.policy` — scope pressure, what to do about a question,
+  a contract change, QA still red, a critical security finding. Defaults fail
+  small: cut scope, halt on a contract change, halt on critical.
+
+  **How the work happens is unchanged** — same playbooks, same agents, same
+  verification, same per-phase commits and tags. Three things keep the delegation
+  honest:
+
+  - **The gate is delegated, never faked.** `/oma:gate` stays
+    `disable-model-invocation: true`; auto mode performs its steps inline and
+    records `by: "auto"` on every gate, rendered by `/oma:status` as
+    `⚡ auto-approved` and stated in the commit message. A user can tell which
+    decisions were theirs from the repository alone, years later.
+  - **An auto-approval checks facts, not taste.** Per-phase checklists drawn from
+    the defects real runs produced: pins proven to compose, every `done` task
+    citing a file and a test that exist, mockups rendering all five states,
+    `env.template` naming every variable the code reads, ship verified from a
+    clean clone. What can't be checked — are these the right requirements, does
+    it look good — goes to the report's *look at this first* list instead of
+    being quietly passed.
+  - **Halting is the design working.** A question no policy answers, a frozen
+    contract needing a change, QA red at its cap, a critical finding — each stops
+    the run with everything committed and tagged. `/oma:auto resume` continues.
+
+  Unattended mode never lowers a guard: OMA still never deploys, never pushes,
+  contracts still freeze, QA still reports what actually ran.
+
+- **The morning report** — `.oma/auto/run-<n>.md`
+  ([template](templates/auto-report.md)), written after every phase so it stays
+  accurate even if the session dies. It leads with what needs the user's eyes,
+  then every assumption made on their behalf with the command that reverses it,
+  then known issues by name.
+- **[The overnight route](GETTING-STARTED.md#part-6--the-overnight-route)** in
+  the getting-started guide, including keeping the machine awake, and the hybrid
+  that's actually recommended: approve Discovery yourself, then hand over the
+  other seven phases.
+
+### Changed
+- `session-start.sh` leads with a halted unattended run and its reason — the most
+  important thing a fresh session can be told, and the first thing someone sees
+  in the morning. Two new self-test cases (43 total).
+- `state.schema.json`: gates gained `by` (`user` | `auto`), and a new `auto`
+  object holds the run, its policy, its journal and its halt reason.
+- `/oma:status` renders auto-approved gates distinctly from the user's own, and
+  surfaces a running or halted unattended run above everything else.
+
+### Known limit
+- **No project has yet been taken from idea to ship unattended.** The mode is
+  built and its halt and reporting machinery is tested at the script level; every
+  validation run to date was gated by a human.
+
 ## [0.6.3] — 2026-08-13
 
 ### Added

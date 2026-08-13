@@ -92,3 +92,8 @@ End with the literal next commands:
 > Tip: after approving, `/clear` then `/oma:run` keeps context fresh — all state lives on disk.
 
 Never call `/oma:gate` yourself. The gate is the user's.
+
+**If `state.auto.status == "halted"`**, this phase is part of an unattended run
+that stopped. Show `auto.halted_on` before the gate summary — the user is
+probably here because of it — and mention that `/oma:auto resume` continues the
+rest of the run once it's resolved.

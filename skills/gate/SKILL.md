@@ -23,8 +23,13 @@ nothing at a gate right now, show current status, stop.
 
 ## On `approve`
 
-1. Append to `gates`: `{ "phase": <current>, "status": "approved", "at": now, "notes": <notes or ""> }`.
+1. Append to `gates`: `{ "phase": <current>, "status": "approved", "by": "user", "at": now, "notes": <notes or ""> }`.
+   The `by` field is always `"user"` here — this command is the user's, and
+   nothing else may write `"user"` into a gate record.
 2. Set `phase.status = "approved"`.
+
+   **If `state.auto.status == "halted"`** and this approval resolves what
+   stopped it, say so: the unattended run can continue with `/oma:auto resume`.
 
 3. **Freeze the contracts this gate owns.** Contracts freeze at the gate of the
    phase that authored them, not all at once:

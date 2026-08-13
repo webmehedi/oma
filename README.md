@@ -11,7 +11,7 @@ Architect, UX Designer, Frontend, Backend, QA, Security, DevOps, SEO, Marketer,
 Social — and stops at a gate after every phase for your approval.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.6.3-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.7.0-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://code.claude.com/docs/en/plugins)
 [![Install](https://img.shields.io/badge/install-from%20GitHub-3FA6A0.svg?style=flat-square)](#-installation)
 [![Agents](https://img.shields.io/badge/agents-12%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
@@ -24,8 +24,9 @@ Social — and stops at a gate after every phase for your approval.
 
 ### [📖 Never built software before? Start here →](GETTING-STARTED.md)
 
-**[⚡ Install](#-installation)** · **[📂 See a real run](#-see-a-real-run)** ·
-**[🚦 How it works](#-how-it-works)** · **[❓ FAQ](#-faq)**
+**[⚡ Install](#-installation)** · **[🌙 Run it overnight](#-the-overnight-run)** ·
+**[📂 See a real run](#-see-a-real-run)** · **[🚦 How it works](#-how-it-works)** ·
+**[❓ FAQ](#-faq)**
 
 </div>
 
@@ -136,6 +137,7 @@ below is the reference version.
 - 📦 [What you actually get](#-what-you-actually-get)
 - 👥 [The team](#-the-team)
 - ⚡ [Commands](#-commands)
+- 🌙 [The overnight run](#-the-overnight-run)
 - 🔧 [How it works](#-how-it-works)
 - 🗿 [Existing codebases](#-existing-codebases)
 - 📂 [See a real run](#-see-a-real-run)
@@ -188,6 +190,10 @@ python3 -m http.server 4173 -d .oma/03-design/mockups
 
 Lost the thread? `/oma:status` tells you where the project stands and the exact
 next action. Close your laptop mid-project, come back next week, continue.
+
+Don't want to sit through eight reviews? `/oma:auto "<idea>"` runs the whole
+pipeline unattended and leaves a report in the morning —
+[what that trades away](#-the-overnight-run).
 
 > 📖 **Want this explained properly, with nothing assumed?**
 > **[The step-by-step guide](GETTING-STARTED.md)** walks the whole path — opening
@@ -459,6 +465,50 @@ to change. The Frontend agent then treats mockup fidelity as its definition of d
 | `/oma:change "<request>"` | Change a frozen contract: impact analysis → your decision → versioned re-freeze → rework tasks |
 | `/oma:task list \| add \| close \| reassign` | Manual backlog control |
 | `/oma:ship` | Final assembly: ship-time verification run, project README, ship report, deploy checklist |
+| `/oma:auto "<idea>"` | **Unattended:** one deep intake, then every phase to ship without stopping — [see below](#-the-overnight-run) |
+
+## 🌙 The overnight run
+
+Eight gates over several hours is the right trade when you're at the keyboard.
+At 11pm it isn't. `/oma:auto` takes the idea, asks everything it needs up front,
+and then runs the whole pipeline while you sleep.
+
+```
+/oma:auto "Invoicing app for freelancers who hate invoicing"
+```
+
+It asks more than `/oma:init` does — visual direction, auth model, payments in
+v1, where it will deploy, what makes the run a success — because in a normal run
+those surface at a gate and someone is there to answer. Then it asks for your
+**standing answers** to the decisions gates exist for: cut scope or include it
+when in doubt, halt on a contract change or allow it, halt when QA is still red
+or accept the failures as known issues. Those defaults fail small.
+
+In the morning there's a report at `.oma/auto/run-1.md` that leads with what
+needs your eyes — not with what went well:
+
+| It contains | Because |
+|---|---|
+| **Look at these three things first**, ranked | An auto-approval can prove a mockup renders. It cannot prove it looks good. |
+| **Every assumption made on your behalf**, with the command that reverses it | You weren't asked; you should at least get the list |
+| **Every gate**, marked `⚡ auto-approved` | Your own approvals stay visibly yours — in `/oma:status` and in the git history |
+| **Known issues by name** | Nothing accepted under policy is hidden |
+
+**What unattended mode does not change:** OMA still never deploys, still never
+pushes, contracts still freeze, every phase still commits and tags, and QA still
+reports what actually ran. It never lowers a guard to keep moving. When it can't
+proceed honestly — a question no policy answers, a frozen contract needing a
+change, a critical security finding — it **halts** with everything committed and
+tagged, and `/oma:auto resume` picks up where it stopped.
+
+> **The honest caveat, and the better way to use it:** a misread requirement in
+> Discovery survives all eight phases here, because the gate that catches it is
+> the one you delegated. So for a first project, approve Discovery yourself and
+> hand the rest over — `/oma:run`, read the requirements, `/oma:gate approve`,
+> then `/oma:auto`. Ten minutes of reading beats every automated check.
+
+Keep the machine awake: `caffeinate -i -t 36000` on macOS,
+`systemd-inhibit --what=idle --why="OMA run" sleep 10h` on Linux.
 
 ## 🔧 How it works
 
@@ -795,6 +845,12 @@ the phase re-runs with your correction as input. For a targeted redo, use
 At the gates, yes — that's the point, and gates are where your attention is
 worth the most. Read the Discovery gate especially carefully; it's the cheapest
 place to catch a misunderstanding and the most expensive one to miss.
+
+If you'd rather not, [`/oma:auto`](#-the-overnight-run) runs the whole pipeline
+unattended: it front-loads the questions, approves each gate against an
+objective checklist, halts rather than guessing at anything expensive, and
+leaves you a report of every assumption it made. The trade is real and stated
+there — the Discovery gate is the one worth keeping for yourself.
 </details>
 
 ## 🧭 Roadmap
@@ -807,6 +863,7 @@ place to catch a misunderstanding and the most expensive one to miss.
 | **M4** | Security, DevOps, SEO, Marketer, Social agents + `/oma:ship` + the deploy guard | ✅ shipped · validated end-to-end² |
 | **M5** | Brownfield mode — `extend` / `refactor` / `audit` on existing repos | ✅ shipped · validated³ |
 | **M6** | Distribution — worked example in-repo, troubleshooting guide, hook self-test | ✅ shipped |
+| **v0.7** | [`/oma:auto`](#-the-overnight-run) — unattended runs with an autonomy policy, objective gate checks and a morning report | ✅ shipped · not yet run end-to-end⁵ |
 
 ³ Validated against **ground truth**: the Ledgerly application was stripped of
 every artifact OMA wrote — `.oma/`, `CLAUDE.md`, the README, git history, and
@@ -827,6 +884,11 @@ database client is gitignored with no `postinstall`, so 91 of 191 tests fail
 until `db:generate` is run by hand. The ship report had called the project green,
 because it was green in a working directory that already had the generated code.
 The audit guard is separately tested at the script level (10 cases).
+
+⁵ The mode is built and its halt/report machinery is tested at the script level,
+but **no complete project has yet been taken from idea to ship unattended** —
+every validation run to date was gated by a human. Treat the first overnight run
+as an experiment, and read the report in the morning rather than the code.
 
 ⁴ All four items are in: this README, the marketplace listing,
 [`examples/ledgerly/`](examples/ledgerly) — the complete 74-file `.oma/` from a
@@ -859,6 +921,11 @@ through an installed plugin session.
   supported by design and untested in practice.
 - Agent deaths mid-dispatch are routine at this scale. Recovery is built in
   (work survives on disk, gaps get re-dispatched), but you will see them.
+- **Unattended mode delegates the gate that matters most.** `/oma:auto` can
+  verify facts — that the pins compose, that every `done` task cites a file that
+  exists, that the mockups render. It cannot tell you the requirements are the
+  ones you meant. No overnight run has been taken end to end yet either; see
+  [the overnight run](#-the-overnight-run) for the trade in full.
 - This is a young project, validated on one application. Expect rough edges,
   and please [file them](../../issues).
 

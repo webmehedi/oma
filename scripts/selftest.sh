@@ -68,6 +68,7 @@ PROJ="$TMPROOT/proj";        mk_project "$PROJ"
 AUDIT="$TMPROOT/audit";      mk_project "$AUDIT" '{"mode":"brownfield","brownfield":{"scope":"audit"}}'
 EXTEND="$TMPROOT/extend";    mk_project "$EXTEND" '{"mode":"brownfield","brownfield":{"scope":"extend"}}'
 BARE="$TMPROOT/bare";        mkdir -p "$BARE"
+HALTED="$TMPROOT/halted";    mk_project "$HALTED" '{"auto":{"run":1,"status":"halted","policy":{"on_question":"assume","on_contract_change":"halt","on_qa_red":"halt","on_security":"halt_critical"},"halted_on":"05-qa: red at the iteration cap","journal":".oma/auto/run-1.md","assumptions":4}}'
 
 # --- contract-guard -----------------------------------------------------------
 echo "contract-guard (PreToolUse: Write|Edit)"
@@ -162,6 +163,21 @@ c=json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"]
 assert "04-build" in c and "api" in c, c' "$H/session-start.sh" "$PROJ" 2>/dev/null
 then ok "summary names the phase and the frozen contracts"
 else bad "summary names the phase and the frozen contracts" "phase + frozen list" "missing"; fi
+# A run that halted overnight must be the first thing a fresh session is told.
+if python3 -c '
+import json,subprocess,sys
+p=subprocess.run(["bash",sys.argv[1]],input=json.dumps({"cwd":sys.argv[2]}),
+                 capture_output=True,text=True)
+c=json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"]
+first=c.splitlines()[0]
+assert "HALTED" in first and "05-qa" in first, first' "$H/session-start.sh" "$HALTED" 2>/dev/null
+then ok "leads with a halted unattended run and its reason"
+else bad "leads with a halted unattended run and its reason" "HALTED + reason on line 1" "missing"; fi
+got=$(python3 -c '
+import json,sys; print(json.dumps({"cwd":sys.argv[1]}))' "$PROJ" | bash "$H/session-start.sh" \
+  | grep -c 'HALTED' || true)
+[ "$got" = "0" ] && ok "says nothing about unattended runs on a project without one" \
+  || bad "says nothing about unattended runs on a project without one" 0 "$got"
 
 # --- fail-open contract -------------------------------------------------------
 echo "fail-open guarantee (a hook bug must never block work)"

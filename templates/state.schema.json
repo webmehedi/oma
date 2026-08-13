@@ -85,6 +85,10 @@
           "phase": { "type": "string" },
           "status": { "enum": ["approved", "rejected", "invalidated"] },
           "at": { "type": "string" },
+          "by": {
+            "enum": ["user", "auto"],
+            "description": "Absent or 'user' = the user decided this gate. 'auto' = an unattended /oma:auto run approved it against the checklist in the auto skill. Never write 'user' for a gate the user did not see."
+          },
           "notes": { "type": "string" }
         }
       }
@@ -160,6 +164,35 @@
         },
         "audit": { "enum": ["pass", "fail", "warn", null] },
         "review_iteration": { "type": "integer" }
+      }
+    },
+    "auto": {
+      "type": "object",
+      "description": "Present once /oma:auto has been started. The policy is the user's standing answer to the decisions they would otherwise have made at gates, captured before the run and never changed mid-run.",
+      "required": ["run", "status", "policy"],
+      "properties": {
+        "run": { "type": "integer", "minimum": 1, "description": "Nth unattended run on this project; names the journal file." },
+        "status": {
+          "enum": ["running", "halted", "finished"],
+          "description": "'halted' means a stop condition fired and the user's input is needed; work already on disk is intact and every approved phase is committed."
+        },
+        "started": { "type": ["string", "null"] },
+        "stop_after": { "type": "string", "description": "Phase id after whose gate the run ends. Normally 08-ship." },
+        "policy": {
+          "type": "object",
+          "required": ["on_question", "on_contract_change", "on_qa_red", "on_security"],
+          "properties": {
+            "scope_pressure": { "enum": ["cut", "include"] },
+            "on_question": { "enum": ["assume", "halt"] },
+            "on_contract_change": { "enum": ["halt", "allow_no_rework"] },
+            "on_qa_red": { "enum": ["halt", "accept"] },
+            "on_security": { "enum": ["halt_critical", "halt_high"] },
+            "max_redispatch": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "journal": { "type": ["string", "null"], "description": "Path to the run report, written after every phase — the run's memory, since the orchestrator's context will not survive eight phases." },
+        "assumptions": { "type": "integer", "description": "Count of decisions taken without the user. Every one is listed in the journal with how to reverse it." },
+        "halted_on": { "type": ["string", "null"], "description": "'<phase>: <reason>' when status is 'halted'." }
       }
     },
     "ship": {

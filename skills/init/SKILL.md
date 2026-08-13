@@ -142,6 +142,10 @@ Ship), noting that every phase stops at a gate you approve. End with exactly:
 
 > Next: `/oma:run` to start Discovery.
 
+If — and only if — the user says they'd rather not sit through eight reviews,
+mention `/oma:auto`, which runs every phase unattended and reports back. Don't
+volunteer it otherwise; the gated loop is the default for a reason.
+
 **Brownfield** — print the project name, the scope mode and what it permits, and
 the plain statement that the first step reads the code without changing a byte of
 it. End with exactly:

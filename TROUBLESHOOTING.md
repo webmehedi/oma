@@ -90,6 +90,41 @@ before running a phase. Details in
 
 ---
 
+## The overnight run stopped partway
+
+**Symptom:** you started `/oma:auto` and woke up to a halted run, or a session
+that ended somewhere in the middle.
+
+**Nothing is lost.** Every phase that reached its gate is committed and tagged,
+and `state.json` holds the rest. `/oma:status` names the reason verbatim, and so
+does the first line a new session sees, because the SessionStart hook leads with
+it.
+
+| What happened | What to do |
+|---|---|
+| `halted_on` names a question | Answer it, then `/oma:auto resume` |
+| `halted_on` says a contract change | `/oma:change "<request>"` — decide it, then resume |
+| QA red at the cap | Read `.oma/05-qa/reports/`, then either fix, or `/oma:gate approve` accepting the failures as known issues, then resume |
+| A critical security finding | `.oma/06-devops/security-review.md` — this one is worth reading before resuming anything |
+| Status still says `running`, nothing is moving | The session died. Start `claude` in the project and run `/oma:auto resume` |
+| The machine slept | Same, plus `caffeinate -i -t 36000` in another terminal next time |
+
+The report at `.oma/auto/run-<n>.md` was written after every completed phase, so
+it is accurate up to the halt even if the session ended abruptly.
+
+## The overnight run finished but the result is wrong
+
+Read `.oma/auto/run-<n>.md` before touching anything — specifically the
+**assumptions** table, which lists every decision made without you and the exact
+command that reverses each one.
+
+If the requirements themselves were wrong, that is the known limit of unattended
+mode and not a bug: the Discovery gate is the one that catches a misread
+requirement, and it was delegated. `/oma:phase 01-discovery "<what's actually
+needed>"` re-runs it and invalidates the downstream gates that depended on it.
+Next time, approve Discovery yourself and hand the remaining seven phases to
+`/oma:auto`.
+
 ## An agent died mid-dispatch
 
 **Symptom:** an agent stops with an API error, a connection close, or a stall
@@ -122,7 +157,7 @@ A phase blocks for one of four reasons, and status names which:
 
 | Cause | Fix |
 |---|---|
-| A blocking question for you | Answer it. The system refuses to build on a guess — that's the feature working. |
+| A blocking question for you | Answer it. The system refuses to build on a guess — that's the feature working. (In an unattended run this is a halt; see [above](#the-overnight-run-stopped-partway).) |
 | QA hit its 3-iteration cap still red | Read the run reports. Then either fix manually, or `/oma:gate approve` with notes to accept specific failures as known issues, or `/oma:run` to re-enter with the counter reset. |
 | Security hit its 2-round cap with critical/high open | Same choice, higher stakes. Approving records each finding by name in the gate notes and carries it into the ship report. |
 | Required artifacts missing after two dispatches | Something structural is wrong — usually a contradiction between the PRD and the contract. Read the last handoff's `blocked_on`. |

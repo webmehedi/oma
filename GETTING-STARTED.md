@@ -24,9 +24,10 @@ short version.
 - [Part 3 — Start your project](#part-3--start-your-project)
 - [Part 4 — The loop you'll repeat 8 times](#part-4--the-loop-youll-repeat-8-times)
 - [Part 5 — Walking the eight phases](#part-5--walking-the-eight-phases)
-- [Part 6 — Running your app on your own computer](#part-6--running-your-app-on-your-own-computer)
-- [Part 7 — Putting it on the internet](#part-7--putting-it-on-the-internet)
-- [Part 8 — When something goes wrong](#part-8--when-something-goes-wrong)
+- [Part 6 — The overnight route](#part-6--the-overnight-route)
+- [Part 7 — Running your app on your own computer](#part-7--running-your-app-on-your-own-computer)
+- [Part 8 — Putting it on the internet](#part-8--putting-it-on-the-internet)
+- [Part 9 — When something goes wrong](#part-9--when-something-goes-wrong)
 - [Cheat sheet](#cheat-sheet)
 - [Glossary](#glossary)
 
@@ -52,11 +53,11 @@ Being honest about what that actually requires:
 - **A willingness to open the terminal.** That black window that scares people. You'll type about fifteen commands total, all of them copy-paste, and this guide gives you every one.
 - **About a working day**, spread across as many sittings as you like. You can stop anywhere and come back next week; nothing is lost.
 - **A real budget.** OMA is thorough, not cheap — a full run is dozens of AI dispatches. See [what it costs](#what-does-this-cost).
-- **A few hours of your actual attention.** Not while it works — at the eight moments it stops and asks you to approve something. That review is where a good result comes from. Skipping it is the one way to guarantee a bad one.
+- **A few hours of your actual attention.** Not while it works — at the eight moments it stops and asks you to approve something. That review is where a good result comes from. If you genuinely can't be there, [the overnight route](#part-6--the-overnight-route) makes those decisions by policy and reports back — but it's a trade, and it's spelled out there.
 
 **What OMA will not do**
 - It won't decide what your product should be. It asks; you answer.
-- It won't put your app on the internet for you — that's [Part 7](#part-7--putting-it-on-the-internet), and it's deliberately your hands on the controls.
+- It won't put your app on the internet for you — that's [Part 8](#part-8--putting-it-on-the-internet), and it's deliberately your hands on the controls.
 - It won't post to your social accounts. It writes the posts; you publish them.
 - It hasn't been proven outside **web apps built with Next.js**. If you want a phone app, this isn't the tool yet.
 
@@ -603,7 +604,108 @@ That's your honest inventory of what you now own.
 
 ---
 
-## Part 6 — Running your app on your own computer
+## Part 6 — The overnight route
+
+Everything above assumes you're at the keyboard for eight reviews. Sometimes
+you're not — you have the idea at 11pm and you'd rather wake up to a project.
+
+```
+/oma:auto "Invoicing app for freelancers who hate invoicing"
+```
+
+That runs **all eight phases without stopping**, and leaves you a report.
+
+### It asks more questions first, on purpose
+
+In the normal loop, questions come up mid-project and you're there to answer
+them. Nobody will be. So `/oma:auto` front-loads them: the usual intake, plus
+what it will otherwise have to guess —
+
+- what it should look like (one reference site, or three adjectives)
+- whether people log in, and whether they share anything
+- whether it takes payments in version 1
+- where you eventually want it hosted
+- whether to fill it with demo data, so there's something to see in the morning
+- one sentence describing what would make this a success
+
+Then it asks for your **standing decisions** — the answers you'd have given at
+the gates. Take the defaults unless you have a reason; they're chosen to keep
+mistakes small:
+
+| It asks | Default | Meaning |
+|---|---|---|
+| Scope when unsure | **cut** | Leave it out and note it, rather than build something you didn't ask for |
+| A question comes up | **assume** | Pick the option that's cheapest to undo, write it down, keep going |
+| A locked decision needs changing | **stop** | This is a re-plan. Wake up to a question, not a surprise |
+| Tests still failing | **stop** | Better a halted run than a green-looking broken app |
+| A critical security problem | **stop** | — |
+
+### Before you walk away
+
+Your computer must stay awake. In a **second terminal window**:
+
+```bash
+caffeinate -i -t 36000
+```
+
+That's a Mac (10 hours). On Ubuntu or WSL:
+`systemd-inhibit --what=idle --why="OMA run" sleep 10h`. Leave the window open.
+
+### In the morning
+
+```
+/oma:status
+```
+
+It tells you whether the run finished or stopped, and where. The full report is
+at `.oma/auto/run-1.md` — open it in any text editor, or just ask in the
+session: `summarize the overnight report for me`.
+
+It's written to be read in that order:
+
+1. **What happened** — finished, or stopped at phase N because of X.
+2. **Look at these three things first.** The most useful part. These are the
+   things nobody could check for you: are these the right requirements, does the
+   design look right, is that security finding acceptable to you.
+3. **What it assumed on your behalf** — every one, with the command that undoes it.
+4. **Known issues**, by name. Nothing swept under the rug.
+5. **What to run next.**
+
+**If it stopped**, nothing is lost — every finished phase is saved and recorded,
+exactly as if you'd approved it. Answer what it asked, then:
+
+```
+/oma:auto resume
+```
+
+### The honest trade
+
+The gates exist to catch a misunderstanding early. Turning them off means a
+misread requirement in phase 1 survives to phase 8 — and that is the single most
+expensive way for one of these projects to go wrong.
+
+The run does check what can be checked: that the versions it picked actually work
+together, that every finished task points at a real file and a real test, that
+the mockups load, that a fresh copy of the project installs and passes its tests.
+What it can't check is *taste and intent* — whether these are the requirements
+you meant, whether the design looks right. Those go straight into the report's
+"look at this first" list instead of being quietly passed.
+
+> **The best of both:** run Discovery yourself, then go to bed.
+>
+> ```
+> /oma:run              # Discovery — takes a few minutes
+>                       # …read the requirements…
+> /oma:gate approve
+> /oma:auto             # the other seven phases, overnight
+> ```
+>
+> Ten minutes of reading a requirements list is worth more than every automatic
+> check in this guide.
+
+---
+
+## Part 7 — Running your app on your own computer
 
 Try it before showing anyone. In your project folder:
 
@@ -634,7 +736,7 @@ location filled in before they'll boot.
 
 ---
 
-## Part 7 — Putting it on the internet
+## Part 8 — Putting it on the internet
 
 **OMA deliberately does not do this.** Not a missing feature — a decision. Going
 live means your accounts, your credentials, your bill and your name on whatever
@@ -663,7 +765,7 @@ explain step 3 of the deploy runbook — what am I actually doing there?
 
 ---
 
-## Part 8 — When something goes wrong
+## Part 9 — When something goes wrong
 
 The five things that will actually happen, and what they mean.
 
@@ -738,6 +840,7 @@ Every command you'll use, in the order you'll need them.
 | `mkdir ~/my-project && cd ~/my-project` | Create the project folder and enter it |
 | `claude` | Start a session in that folder |
 | `python3 -m http.server 4173 -d .oma/03-design/mockups` | View the mockups at `localhost:4173` |
+| `caffeinate -i -t 36000` | Mac: stop the computer sleeping during an overnight run |
 | `npm install && npm run dev` | Run your finished app at `localhost:3000` |
 
 **Inside Claude Code**
@@ -746,6 +849,8 @@ Every command you'll use, in the order you'll need them.
 |---|---|
 | `/oma:init "<your idea>"` | Start a project |
 | `/oma:run` | Run the next phase |
+| `/oma:auto "<your idea>"` | Run **every** phase unattended — [the overnight route](#part-6--the-overnight-route) |
+| `/oma:auto resume` | Continue an overnight run that stopped |
 | `/oma:status` | **Where am I, what's next** — the one to remember |
 | `/oma:gate approve` | Accept this phase |
 | `/oma:gate reject "<why>"` | Send it back with a correction |
@@ -782,6 +887,9 @@ Every term in this guide that isn't ordinary English.
 | **Hook** | An automatic rule that runs during a session — blocking edits to frozen files, logging every command, preventing accidental deploys. |
 | **Stack** | The set of technologies your app is built from. |
 | **Mockup** | A clickable fake of your app's screens, built before any real code. |
+| **Unattended run** | `/oma:auto` — the whole pipeline with nobody watching, approving each gate against a checklist instead of asking you. |
+| **Autonomy policy** | The standing answers you give an unattended run before it starts: cut scope or include it, stop on a problem or carry on. |
+| **Halt** | An unattended run stopping on purpose because it hit something it shouldn't decide alone. Everything finished is saved; `/oma:auto resume` continues. |
 
 ---
 

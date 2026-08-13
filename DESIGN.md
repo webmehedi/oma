@@ -66,20 +66,21 @@ oma/
 │   ├── ...                         #   marketer, social
 │   └── oma-archaeologist.md        # brownfield only (M5)
 ├── skills/
-│   ├── oma-init/SKILL.md           # intake: idea → brief + clarifying questions
-│   ├── oma-run/SKILL.md            # advance to the next phase
-│   ├── oma-phase/SKILL.md          # run one named phase (re-runnable)
-│   ├── oma-status/SKILL.md         # where am I, what's blocked
-│   ├── oma-gate/SKILL.md           # approve / reject the current phase
-│   ├── oma-change/SKILL.md         # request a change to a frozen contract
-│   ├── oma-task/SKILL.md           # add / reassign a backlog item
-│   └── oma-ship/SKILL.md           # final assembly + handoff report
+│   ├── init/SKILL.md               # intake: idea → brief + clarifying questions
+│   ├── run/SKILL.md                # advance to the next phase
+│   ├── phase/SKILL.md              # run one named phase (re-runnable)
+│   ├── status/SKILL.md             # where am I, what's blocked
+│   ├── gate/SKILL.md               # approve / reject the current phase
+│   ├── change/SKILL.md             # request a change to a frozen contract
+│   ├── task/SKILL.md               # add / reassign a backlog item
+│   ├── ship/SKILL.md               # final assembly + handoff report
+│   └── auto/SKILL.md               # the whole pipeline unattended (§11.1)
 ├── phases/                         # 00-archaeology … 08-ship playbooks (orchestrator-read)
 ├── hooks/
 │   ├── hooks.json
 │   └── scripts/                    # contract-guard, deploy-guard, audit-guard,
 │                                   # command-log, handoff-check, session-start
-├── scripts/selftest.sh             # 41 behavioral cases across all six hooks
+├── scripts/selftest.sh             # 43 behavioral cases across all six hooks
 ├── examples/ledgerly/              # a complete .oma/ from a real run (M6)
 ├── templates/
 │   ├── state.schema.json
@@ -139,8 +140,11 @@ oma/
 │   ├── landing-copy.md
 │   ├── launch-plan.md
 │   └── social-calendar.md
+├── auto/
+│   └── run-<n>.md                  # the unattended run's journal and morning report
 └── log/
-    └── handoffs.jsonl              # append-only message bus
+    ├── handoffs.jsonl              # append-only message bus
+    └── commands.jsonl              # every shell command and exit code
 ```
 
 Application source code goes in the repository proper (`src/`, `app/`, wherever the stack dictates). `.oma/` holds process artifacts only. It is committed — it's the project's memory.
@@ -556,8 +560,52 @@ Two rules that matter:
 | `/oma:change "<request>"` | Opens a change request against a frozen contract, with impact analysis |
 | `/oma:task add \| reassign \| close` | Manual backlog control |
 | `/oma:ship` | Final assembly: README, handoff report, deploy checklist |
+| `/oma:auto "<idea>"` | The whole pipeline unattended — one deep intake, then every phase to ship (§11.1) |
 
 `/oma:run` is the main loop. Realistic usage is: `/oma:run` → read → `/oma:gate approve` → `/clear` → `/oma:run` → repeat.
+
+### 11.1 Unattended mode
+
+`/oma:auto` exists because the gate-per-phase loop asks for the user's attention
+eight times over several hours, and there are projects — and hours of the day —
+where that is the wrong trade. Give it an idea before bed, read a report in the
+morning.
+
+**Nothing about how the work happens changes.** Same playbooks, same agents, same
+verification, same commits and tags. What changes is who answers the gate, and
+that is the entire risk, so the design is built around three claims:
+
+1. **The gate is delegated, never faked.** `/oma:gate` keeps
+   `disable-model-invocation: true` — the model cannot call it, in auto mode or
+   any other. Auto mode performs the gate's *steps* inline and records
+   `by: "auto"` on the gate, which `/oma:status` renders as `⚡ auto-approved`
+   and the commit message states outright. A user must always be able to see
+   which decisions were theirs, months later, from the repository alone.
+2. **An auto-approval checks facts, not taste.** Each phase has an objective
+   checklist — pins proven to compose, every `done` task citing a file and a test
+   that exist, mockups that render all five states, `env.template` naming every
+   variable the code reads, ship verified from a clean clone. Those are the
+   defects real OMA runs actually produced. What cannot be checked (are these the
+   right requirements? does it look good?) is not silently passed: it is
+   collected into the morning report's *look at this first* list.
+3. **Halting is the design working.** A blocking question no policy answers, a
+   contract change, QA red at its cap, a critical security finding — each stops
+   the run with everything committed and tagged. `/oma:auto resume` continues.
+
+The user's standing answers live in `state.auto.policy`, captured before the
+first dispatch and never changed mid-run. Defaults fail small: cut scope when in
+doubt, halt on a contract change, halt on a critical finding.
+
+**The honest limitation:** a misread requirement in Discovery survives all eight
+phases in auto mode, because the gate that would have caught it is the one being
+delegated. The recommended shape is therefore hybrid — approve Discovery
+yourself, then `/oma:auto` for the rest. Ten minutes of reading requirements
+outweighs every check in the list above.
+
+**Context.** An eight-phase run exceeds one window and there is no `/clear`. The
+mitigation is the same thing that makes the rest of OMA work: state on disk. The
+run journals to `.oma/auto/run-<n>.md` after every phase, and recovery from a
+compaction is `state.json` + journal → continue at `phase.current`.
 
 ---
 
@@ -628,6 +676,8 @@ Opinionation is the point. Agent prompts can reference concrete APIs and idioms,
 | Context exhaustion mid-build | Phase gates + disk state + `/clear` guidance |
 | Agent edits another agent's files | Boundary guard hook + explicit `Never touches` in each agent |
 | Token blowup on a bad premise | Per-phase gates catch a misread requirement in Discovery, before Build |
+| Unattended run rubber-stamping its own work | Auto-approval requires an objective per-phase checklist; unverifiable items go to the report as *look at this*, and every auto gate is marked `by: "auto"` in state and in the commit |
+| Unattended run losing the night to a stall | Halt conditions are explicit and leave every approved phase committed and tagged; the SessionStart hook leads with the halt reason |
 | Generic, lifeless UI | UX ships runnable mockups you approve *before* any code exists; tokens frozen |
 | Build doesn't match the approved mockup | Mockup is the acceptance reference; both read the same `tokens.css` and `motion-spec.md` |
 | Animation feels wrong in production though the mockup felt right | Motion defined as frozen tokens, not per-implementation taste |
@@ -777,4 +827,4 @@ For well-scoped applications — SaaS CRUD, marketing sites, dashboards, REST/Gr
 
 For novel algorithmic work, hard realtime systems, or anything requiring deep domain expertise, expect a strong scaffold and a clear plan that you finish yourself.
 
-The failure mode to watch for is not bad code. It's *confident, complete-looking* output built on a misread requirement. Which is exactly why the Discovery gate exists, and why it's the one you should read most carefully.
+The failure mode to watch for is not bad code. It's *confident, complete-looking* output built on a misread requirement. Which is exactly why the Discovery gate exists, and why it's the one you should read most carefully — and why unattended mode (§11.1), which delegates that gate along with the others, recommends you keep that one for yourself.

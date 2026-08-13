@@ -9,7 +9,7 @@
     {
       "name": "oma",
       "displayName": "OMA — One Man Army",
-      "description": "Give it a project idea; it runs Discovery → Architecture → Design → Build → QA → DevOps → Growth with role-specialized agents, stopping at a gate after every phase for your approval. Produces a working repository plus the PRD, API contract, design system, runnable HTML mockups, tests and launch material a real team would have written. Built and validated for Next.js + TypeScript + Prisma — other stacks are supported by design but have not been tested.",
+      "description": "Give it a project idea; it runs Discovery → Architecture → Design → Build → QA → DevOps → Growth with role-specialized agents, stopping at a gate after every phase for your approval — or run the whole pipeline unattended with /oma:auto and read a report in the morning. Produces a working repository plus the PRD, API contract, design system, runnable HTML mockups, tests and launch material a real team would have written. Built and validated for Next.js + TypeScript + Prisma — other stacks are supported by design but have not been tested.",
       "source": "./",
       "category": "development",
       "tags": [

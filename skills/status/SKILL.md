@@ -24,7 +24,7 @@ Mode    <omit entirely for greenfield | "brownfield · <scope>" + the baseline v
 Stack   <profile><+overrides if any>
 
 Gates   01-discovery    ✔ approved <date>   <notes if any>
-        02-architecture ✔ approved <date>
+        02-architecture ⚡ auto-approved <date>
         03-design       ◌ awaiting your review
         04-build …      · not reached
 
@@ -33,7 +33,17 @@ Contracts   <"none frozen yet" | list: name vN ❄ frozen>
 Recent      <last 1-3 handoffs: "from → summary" one line each>
 ```
 
+Use `⚡ auto-approved` for any gate whose record has `by: "auto"` and `✔ approved`
+only for the user's own. Never collapse the two — a user must be able to see at a
+glance which decisions were theirs.
+
 Then, only if present:
+- **Unattended run** — if `state.auto` exists, one block above everything else:
+  the run number, its status, how many assumptions were made on the user's
+  behalf, and the journal path. If `status` is `halted`, lead with
+  `halted_on` verbatim and say that nothing is lost — every approved phase is
+  committed and tagged. If `running`, say so plainly; the user may be looking at
+  a session that is still working.
 - **Brownfield baseline** — if `state.brownfield.baseline` shows any `fail`, say
   so here and say it was failing *before OMA touched anything*. A user returning
   after a week must not mistake a pre-existing failure for something OMA broke.
@@ -49,6 +59,8 @@ Then, only if present:
 
 End with the single exact next action, chosen honestly from the state:
 
+- `state.auto.status == "halted"` → the most direct way to clear `halted_on`,
+  then "`/oma:auto resume` to run the rest unattended."
 - blocking questions exist → "Answer the questions above, then `/oma:run`."
 - `awaiting_gate` → "Review the artifacts above, then `/oma:gate approve` or `/oma:gate reject \"why\"`." (For the design gate, include the mockup serve command: `python3 -m http.server 4173 -d .oma/03-design/mockups`.)
 - `blocked` → what's blocked and the most direct way to unblock.
