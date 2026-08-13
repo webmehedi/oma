@@ -3,6 +3,37 @@
 All notable changes to OMA. Versions follow [semver](https://semver.org/);
 while the plugin is pre-1.0, minor versions may change behaviour.
 
+## [0.6.2] — 2026-08-13
+
+### Added
+- **A real [Installation](README.md#-installation) section.** The old
+  instructions were two slash commands with no context, which left two things
+  unanswered: that OMA installs **straight from this GitHub repo** rather than
+  through Anthropic's marketplace — in Claude Code a "marketplace" is just a git
+  repo with a `.claude-plugin/marketplace.json` — and what to do when you don't
+  have a terminal `/plugin` panel. Now covered: checking for and installing the
+  Claude Code CLI itself, the interactive route, the `claude plugin …` shell
+  route, verification, the **desktop app** (where the plugin browser only lists
+  marketplaces you've already added, so the marketplace must be registered from a
+  terminal first), a `.claude/settings.json` declaration for teams and cloud
+  sessions, updating, local development and uninstalling.
+- **Installation section in [TROUBLESHOOTING.md](TROUBLESHOOTING.md#installation)**,
+  indexed by the exact error message: `claude: command not found`, `/plugin`
+  unavailable, `Marketplace "oma" not found`, a stale catalog, and skills that
+  install but don't appear.
+
+### Changed
+- Both quick start and installation now say to **restart the session after
+  installing**. Hooks load at session start, so a mid-session install can leave
+  contract freezing, command logging and the deploy guard inert — and because
+  every hook fails open, that failure is silent.
+- Requirements expanded: the account tiers Claude Code needs, and Windows stated
+  as WSL-only rather than implied by "macOS or Linux".
+
+### Fixed
+- DESIGN.md named the marketplace source as `mehedi/oma`; the repo is
+  `webmehedi/oma`.
+
 ## [0.6.1] — 2026-08-13
 
 ### Changed

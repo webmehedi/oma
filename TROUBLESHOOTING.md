@@ -1,12 +1,91 @@
 # Troubleshooting
 
-Every failure mode below was hit during real validation runs. None is
-hypothetical, and most are **normal at this scale** rather than signs something
-is broken.
+[Installation](#installation) covers getting the plugin loaded, indexed by the
+exact error message. Everything after it is a failure mode **hit during a real
+validation run** — none is hypothetical, and most are *normal at this scale*
+rather than signs something is broken.
 
-The first rule when anything goes wrong: **run `/oma:status`.** All state is on
+The first rule once a project exists: **run `/oma:status`.** All state is on
 disk, nothing lives in the conversation, and status reconstructs the whole
 picture — including the exact next command.
+
+---
+
+## Installation
+
+### `claude: command not found`
+
+OMA is a Claude Code plugin, so the Claude Code CLI has to exist first:
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+That's macOS, Linux and WSL. On Windows PowerShell it's
+`irm https://claude.ai/install.ps1 | iex`. Then `claude --version` should print a
+version, and `claude doctor` diagnoses anything else. The full table of install
+methods is in [Installation](README.md#-installation).
+
+Note that **having the desktop app is not the same as having the CLI on your
+`PATH`** — and adding a third-party marketplace is a CLI step.
+
+### `/plugin` isn't available in this environment
+
+You're in the desktop app or a cloud session, where `/plugin` would open a
+terminal-only panel. Run the two commands from a terminal instead — the desktop
+app's own integrated terminal counts:
+
+```bash
+claude plugin marketplace add webmehedi/oma
+claude plugin install oma@oma
+```
+
+Then restart the app. For **cloud sessions**, plugins can't be installed this way
+at all; declare OMA in the repository's `.claude/settings.json` under
+`extraKnownMarketplaces` + `enabledPlugins` instead — the JSON is in
+[Installation](README.md#without-a-terminal-or-for-a-whole-team).
+
+### `Marketplace "oma" not found`
+
+`/plugin install oma@oma` was run before `/plugin marketplace add webmehedi/oma`.
+Add the marketplace first — that command is what tells Claude Code where a plugin
+called `oma` comes from.
+
+If the `add` itself failed: the repo is public, so this is almost always network
+or git. Confirm reachability with `git clone https://github.com/webmehedi/oma`
+from the same machine, then point Claude Code at the local clone instead:
+`claude plugin marketplace add /path/to/oma`.
+
+### `Plugin "oma" not found in marketplace`
+
+Your cached copy of the catalog is stale — third-party marketplaces don't
+auto-update by default:
+
+```bash
+claude plugin marketplace update oma
+```
+
+Then retry the install.
+
+### It installed, but `/oma:init` doesn't exist
+
+In order:
+
+1. `claude plugin list` — is `oma@oma` present *and* enabled?
+2. `/reload-plugins` (add `--force` if it warns about the prompt cache).
+3. Restart the session. **Do this before starting a project regardless** — see
+   the next entry.
+4. Still nothing: `rm -rf ~/.claude/plugins/cache`, restart, reinstall.
+
+Plugin skills are namespaced by plugin name, so the command is `/oma:init` —
+never a bare `/init`.
+
+### Installed mid-session and the hooks aren't firing
+
+Expected. Hooks are loaded at **session start**, so a plugin installed partway
+through a session may have its skills active while its hooks are not. Restart
+before running a phase. Details in
+[Hooks don't seem to be doing anything](#hooks-dont-seem-to-be-doing-anything).
 
 ---
 
@@ -152,9 +231,9 @@ sub-packages.
 
 ## Hooks don't seem to be doing anything
 
-Check the plugin is actually installed — `/plugin` lists it. Hooks load at
-**session start**, so a plugin installed mid-session isn't active until you
-restart.
+Check the plugin is actually installed — `claude plugin list`, or `/plugin` if
+your environment has it. Hooks load at **session start**, so a plugin installed
+mid-session isn't active until you restart.
 
 Then check the preconditions each hook has:
 

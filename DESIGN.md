@@ -59,7 +59,7 @@ Agents shipped inside a plugin have their `hooks`, `mcpServers`, and `permission
 oma/
 ├── .claude-plugin/
 │   ├── plugin.json                 # manifest
-│   └── marketplace.json            # so users can /plugin marketplace add mehedi/oma
+│   └── marketplace.json            # so users can /plugin marketplace add webmehedi/oma
 ├── agents/                         # 12 role definitions
 │   ├── oma-project-manager.md      #   …architect, ux-designer, frontend,
 │   ├── oma-architect.md            #   backend, qa, security, devops, seo,
