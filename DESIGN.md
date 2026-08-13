@@ -771,6 +771,8 @@ working tree.**
 
 ## 19. Honest assessment
 
+**Scope of the evidence: Next.js only.** Every validation run — M3, M4 and M5, greenfield and brownfield — used a single Next.js + TypeScript + Prisma application. The stack-agnostic machinery (gates, contracts, the handoff bus, the QA loop, the archaeologist's method) should carry to any stack; the default profile, the Framer Motion translation in the mockup pipeline, the SEO agent's metadata idioms and the DevOps container/CI templates are all written around Next.js and would need work elsewhere. Treat any non-Next.js run as unexplored territory.
+
 For well-scoped applications — SaaS CRUD, marketing sites, dashboards, REST/GraphQL APIs, admin panels, internal tools — this produces a real, running, tested project. That claim rests entirely on the QA loop in §10 being real: actual commands, actual exit codes, failures fed back as tasks.
 
 For novel algorithmic work, hard realtime systems, or anything requiring deep domain expertise, expect a strong scaffold and a clear plan that you finish yourself.

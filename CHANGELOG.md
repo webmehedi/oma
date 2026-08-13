@@ -3,6 +3,17 @@
 All notable changes to OMA. Versions follow [semver](https://semver.org/);
 while the plugin is pre-1.0, minor versions may change behaviour.
 
+## [0.6.1] — 2026-08-13
+
+### Changed
+- Documentation now states plainly that **Next.js is the only stack OMA has been
+  validated on**. Added a `validated on: Next.js only` badge, a
+  "what it's been proven on" section separating the stack-agnostic machinery from
+  the Next.js-specific parts, and the same caveat in both plugin manifests, the
+  design doc and the troubleshooting guide. No behaviour change — other stacks
+  were always supported by design and always untested; the docs just said it too
+  quietly.
+
 ## [0.6.0] — 2026-08-13 · M6: Distribution
 
 The milestone that makes the project readable by someone who isn't its author.

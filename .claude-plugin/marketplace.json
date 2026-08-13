@@ -1,6 +1,6 @@
 {
   "name": "oma",
-  "description": "OMA — One Man Army. A phase-gated SDLC team of specialist agents for Claude Code.",
+  "description": "OMA — One Man Army. A phase-gated SDLC team of specialist agents for Claude Code. Validated on Next.js + TypeScript + Prisma.",
   "owner": {
     "name": "S M Mehedi Hasan",
     "url": "https://github.com/webmehedi"
@@ -9,10 +9,17 @@
     {
       "name": "oma",
       "displayName": "OMA — One Man Army",
-      "description": "Give it a project idea; it runs Discovery → Architecture → Design → Build → QA → DevOps → Growth with role-specialized agents, stopping at a gate after every phase for your approval. Produces a working repository plus the PRD, API contract, design system, runnable HTML mockups, tests and launch material a real team would have written.",
+      "description": "Give it a project idea; it runs Discovery → Architecture → Design → Build → QA → DevOps → Growth with role-specialized agents, stopping at a gate after every phase for your approval. Produces a working repository plus the PRD, API contract, design system, runnable HTML mockups, tests and launch material a real team would have written. Built and validated for Next.js + TypeScript + Prisma — other stacks are supported by design but have not been tested.",
       "source": "./",
       "category": "development",
-      "tags": ["sdlc", "agents", "orchestration", "mockups"],
+      "tags": [
+        "sdlc",
+        "agents",
+        "orchestration",
+        "mockups",
+        "nextjs",
+        "typescript"
+      ],
       "strict": true
     }
   ]

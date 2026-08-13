@@ -11,9 +11,10 @@ Architect, UX Designer, Frontend, Backend, QA, Security, DevOps, SEO, Marketer,
 Social — and stops at a gate after every phase for your approval.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.6.0-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.6.1-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://docs.claude.com/en/docs/claude-code/plugins)
 [![Agents](https://img.shields.io/badge/agents-12%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
+[![Validated on](https://img.shields.io/badge/validated%20on-Next.js%20only-D97757.svg?style=flat-square)](#-what-its-been-proven-on)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-3FA6A0.svg?style=flat-square)](#-contributing)
 
 *You are the one-person company. OMA is your team.*
@@ -55,6 +56,12 @@ Three things make it different from "ask an AI to build my app":
 > runbook and launch material. Brownfield mode reads an existing repository
 > first, and is validated against ground truth. You can
 > [read a real run](#-see-a-real-run) before installing anything.
+>
+> ⚠️ **Validated on Next.js only.** Every validation run to date has been a
+> Next.js + TypeScript + Prisma application. Other stacks are supported by
+> design and have never been tested — see
+> [what it's been proven on](#-what-its-been-proven-on) before committing a
+> project to this.
 
 ## 📑 Table of contents
 
@@ -67,6 +74,7 @@ Three things make it different from "ask an AI to build my app":
 - 🗿 [Existing codebases](#-existing-codebases)
 - 📂 [See a real run](#-see-a-real-run)
 - 🧪 [Proven on a real project](#-proven-on-a-real-project)
+- 🎯 [What it's been proven on](#-what-its-been-proven-on)
 - 🧱 [The default stack](#-the-default-stack)
 - 📋 [Requirements](#-requirements)
 - ❓ [FAQ](#-faq)
@@ -365,10 +373,43 @@ The same project was then taken through DevOps, Growth and Ship:
   canonical URL and sitemap entry ships pointing at `localhost`. Fixed in v0.4.1
   by re-checking env completeness after Growth.
 
+## 🎯 What it's been proven on
+
+Every validation run — M3, M4 and M5 — used **one application**: a Next.js 16 +
+TypeScript + Prisma/SQLite invoicing app. That's the honest boundary of the
+evidence, and it's worth knowing before you point this at something.
+
+| | Status |
+|---|---|
+| **Next.js + TypeScript + Prisma** | ✅ Validated end-to-end, three times, greenfield and brownfield |
+| Any other JS/TS framework (SvelteKit, Nuxt, Remix, plain Node) | ⚠️ Supported by design, never run |
+| Non-JS stacks (Django, Rails, Go, Laravel, .NET) | ⚠️ Supported by design, never run |
+| Mobile / desktop / embedded | ❌ Out of scope — the design assumes a web application |
+
+**What should carry over unchanged**, because it's stack-agnostic by
+construction: the phase gates, the frozen-contract mechanism, the handoff bus,
+`state.json`, the QA repair loop, the security agent's probing method, and the
+brownfield archaeologist's approach.
+
+**What is written around Next.js specifically**, and would need work elsewhere:
+
+- `stacks/web-app-default.md` — the default profile, top to bottom
+- The mockup pipeline's translation from vanilla Motion → **Framer Motion**
+- `oma-seo`'s metadata idioms — `metadata` exports, `robots.ts`, `sitemap.ts`
+- `oma-devops`'s container and CI templates (Node-shaped: `npm ci`, standalone output)
+- `oma-backend`'s Prisma assumptions in the data layer
+
+**If you use a different stack**, `/oma:init` accepts it and the Architect will
+interview you instead of using the default profile. Expect the spec phases to
+work well, and expect rough edges in Design, Build and DevOps. Please
+[open an issue](../../issues) with what broke — that's the single most useful
+contribution to this project right now.
+
 ## 🧱 The default stack
 
-Opinionated, and overridable at intake (`/oma:init` asks). Output quality is
-strongest on the default:
+Opinionated, and overridable at intake (`/oma:init` asks) — but this is the
+combination the pipeline was built around and the only one it has been proven
+on:
 
 **Next.js** (App Router) · **TypeScript** strict · **Prisma** · **Tailwind** ·
 **Zod** · **Vitest** · **Playwright** · **Framer Motion** + **Lenis**
@@ -431,8 +472,17 @@ the idea needs rethinking, before you've paid for the build.
 <details>
 <summary><b>Can I use a different stack?</b></summary>
 
-Yes. `/oma:init` asks, and you can override anything in `stacks/web-app-default.md`.
-The Architect still has to prove the pins compose before the stack freezes.
+Mechanically yes — `/oma:init` asks, you can override anything in
+`stacks/web-app-default.md`, and the Architect still has to prove the pins
+compose before the stack freezes.
+
+Honestly, though: **no non-Next.js stack has ever been run through this
+pipeline.** The parts that are stack-specific — the default profile, the mockup
+translation to Framer Motion, the SEO agent's metadata idioms, the DevOps
+container and CI templates — are all written around Next.js. The parts that
+aren't (gates, contracts, the handoff bus, the QA loop) should carry over
+unchanged, but "should" is doing real work in that sentence. If you try Django,
+Rails, Go or SvelteKit, please [open an issue](../../issues) with what broke.
 </details>
 
 <details>
@@ -509,12 +559,13 @@ through an installed plugin session.
   `npm publish`, `terraform apply`, …) are denied outright, and `git push` asks
   first. If you want to deploy, the runbook has the exact command — run it in
   your own terminal.
-- Best results on well-scoped web applications using the default stack. Custom
-  stacks work; quality is strongest on the default.
+- **Next.js is the only stack this has ever been validated on.** See
+  [what it's been proven on](#-what-its-been-proven-on). Everything else is
+  supported by design and untested in practice.
 - Agent deaths mid-dispatch are routine at this scale. Recovery is built in
   (work survives on disk, gaps get re-dispatched), but you will see them.
-- This is a young project — v0.3.1, validated on one full build. Expect rough
-  edges, and please [file them](../../issues).
+- This is a young project, validated on one application. Expect rough edges,
+  and please [file them](../../issues).
 
 ## 🤝 Contributing
 

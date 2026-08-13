@@ -209,6 +209,23 @@ Levers, in order of effect:
 
 ---
 
+## I'm not using Next.js and things are odd
+
+Expected, and worth saying plainly: **Next.js + TypeScript + Prisma is the only
+stack OMA has been validated on.**
+
+The phase machinery is stack-agnostic — gates, frozen contracts, the handoff bus,
+the QA loop. What is written around Next.js: the default stack profile, the
+mockup pipeline's Framer Motion translation, the SEO agent's metadata idioms
+(`metadata` exports, `robots.ts`, `sitemap.ts`), and the DevOps container and CI
+templates.
+
+If you're on another stack, expect Discovery and Architecture to work well, and
+expect friction in Design, Build and DevOps. Overriding `stacks/web-app-default.md`
+at intake makes the Architect interview you instead of assuming. Please
+[open an issue](../../issues) with what broke — that's the most useful
+contribution to this project right now.
+
 ## Still stuck
 
 Open an issue with `/oma:status` output, the tail of
