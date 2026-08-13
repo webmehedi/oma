@@ -11,7 +11,7 @@ Architect, UX Designer, Frontend, Backend, QA, Security, DevOps, SEO, Marketer,
 Social — and stops at a gate after every phase for your approval.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D97757.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.6.2-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.6.3-3FA6A0.svg?style=flat-square)](.claude-plugin/plugin.json)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-000000.svg?style=flat-square)](https://code.claude.com/docs/en/plugins)
 [![Install](https://img.shields.io/badge/install-from%20GitHub-3FA6A0.svg?style=flat-square)](#-installation)
 [![Agents](https://img.shields.io/badge/agents-12%20specialists-8FA3B4.svg?style=flat-square)](#-the-team)
@@ -20,7 +20,66 @@ Social — and stops at a gate after every phase for your approval.
 
 *You are the one-person company. OMA is your team.*
 
+<br>
+
+### [📖 Never built software before? Start here →](GETTING-STARTED.md)
+
+**[⚡ Install](#-installation)** · **[📂 See a real run](#-see-a-real-run)** ·
+**[🚦 How it works](#-how-it-works)** · **[❓ FAQ](#-faq)**
+
 </div>
+
+---
+
+<div align="center">
+
+### One sentence in. A tested application out.
+
+</div>
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**1 · You describe it**
+
+```
+/oma:init "Invoicing app
+for freelancers"
+```
+
+Answer 5–8 questions. That's the whole input.
+
+</td>
+<td width="33%" valign="top">
+
+**2 · The team works**
+
+```
+/oma:run
+```
+
+Twelve specialists, eight phases, in order — each stopping at a gate for you.
+
+</td>
+<td width="33%" valign="top">
+
+**3 · You approve, or don't**
+
+```
+/oma:gate approve
+```
+
+Reject with a reason and the phase redoes itself. Repeat eight times.
+
+</td>
+</tr>
+</table>
+
+**What you end up holding:** a working repository, 190+ passing tests, clickable
+mockups, a PRD, an API contract, a security review with real probes, CI, a
+deploy runbook, landing copy and 30 days of drafted posts — plus a written
+record of every decision and every failure along the way.
 
 ---
 
@@ -66,6 +125,11 @@ Three things make it different from "ask an AI to build my app":
 
 ## 📑 Table of contents
 
+**New to this?** The [step-by-step guide](GETTING-STARTED.md) walks the whole
+path — installing, describing your idea, what to review at each of the eight
+stops, and running the finished app. It assumes no coding ability. Everything
+below is the reference version.
+
 - 🚀 [Quick start](#-quick-start)
 - 💾 [Installation](#-installation)
 - 🚦 [The pipeline](#-the-pipeline)
@@ -87,32 +151,15 @@ Three things make it different from "ask an AI to build my app":
 
 ## 🚀 Quick start
 
-**1. Check Claude Code is installed** — in a terminal:
+**Install** — from a terminal. It comes straight from this repo, not from
+Anthropic's marketplace ([why that works](#-installation)):
 
 ```bash
-claude --version
+claude plugin marketplace add webmehedi/oma
+claude plugin install oma@oma
 ```
 
-No version number? [Install it first](#-installation) — one command.
-
-**2. Install OMA** — inside a Claude Code session:
-
-```
-/plugin marketplace add webmehedi/oma
-/plugin install oma@oma
-```
-
-Then **restart the session**, so the hooks load.
-
-> **OMA is not in Anthropic's marketplace — it installs straight from this
-> GitHub repo.** In Claude Code, a "marketplace" is just a git repo containing a
-> [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json); the first
-> command points Claude Code at this one. No central registry is involved.
-
-On the **desktop app**, or `/plugin` unavailable in your environment? See
-[Installation](#-installation) — it's two shell commands instead.
-
-**3. Start a project:**
+**Start a project** — in a new, empty folder:
 
 ```bash
 mkdir my-new-project && cd my-new-project && claude
@@ -142,24 +189,78 @@ python3 -m http.server 4173 -d .oma/03-design/mockups
 Lost the thread? `/oma:status` tells you where the project stands and the exact
 next action. Close your laptop mid-project, come back next week, continue.
 
+> 📖 **Want this explained properly, with nothing assumed?**
+> **[The step-by-step guide](GETTING-STARTED.md)** walks the whole path — opening
+> a terminal, installing, writing a good one-line idea, what to look at during
+> each of the eight reviews, running your finished app, and putting it online.
+
 ## 💾 Installation
 
-OMA is distributed **from this repository**, not through Anthropic's plugin
-marketplace. In Claude Code a marketplace is simply a git repo containing a
-[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) — this one
-does, so `webmehedi/oma` is directly installable. There is no submission, no
-review queue and no central registry anywhere in the path.
+**OMA installs straight from this repository.** It is not in Anthropic's plugin
+marketplace and doesn't need to be — in Claude Code, a "marketplace" is just a
+git repo containing a
+[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json), and this
+repo has one. No submission, no review queue, no central registry in the path.
 
-### Step 0 — is Claude Code installed?
+> 📖 **First time doing any of this?** The
+> [step-by-step guide](GETTING-STARTED.md#part-1--install-claude-code) covers the
+> same ground assuming no prior experience — including opening a terminal and
+> installing Node.
 
-Every route below needs the Claude Code CLI. In a terminal:
+### The two-minute version
+
+**1 — check Claude Code is installed:**
 
 ```bash
 claude --version
 ```
 
-A working install prints something like `2.1.220 (Claude Code)`. If you get
-`command not found`, install it:
+Prints a version like `2.1.220 (Claude Code)`? Good. `command not found` means
+you need it first:
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+**2 — install OMA:**
+
+```bash
+claude plugin marketplace add webmehedi/oma
+claude plugin install oma@oma
+```
+
+**3 — verify, then start a session:**
+
+```bash
+claude plugin list
+```
+
+`oma@oma` should be listed and enabled.
+
+> ⚠️ **Start a fresh session before running a phase.** OMA's hooks — the ones
+> that freeze contracts, log every command and block accidental deploys — load at
+> session start. A mid-session install can leave them inert, and that failure is
+> *silent*, because
+> [every hook fails open by design](TROUBLESHOOTING.md#hooks-dont-seem-to-be-doing-anything).
+
+<details>
+<summary><b>Installing from inside a session instead</b></summary>
+
+Identical result, interactive:
+
+```
+/plugin marketplace add webmehedi/oma
+/plugin install oma@oma
+```
+
+`/plugin install` asks for a scope — pick **user** to have OMA in every project.
+If the install summary says `Run /reload-plugins to activate.`, run that. Restart
+regardless, per the note above.
+
+</details>
+
+<details>
+<summary><b>Other install methods for Claude Code itself</b></summary>
 
 | Platform | Command |
 |---|---|
@@ -169,99 +270,33 @@ A working install prints something like `2.1.220 (Claude Code)`. If you get
 | Windows — WinGet | `winget install Anthropic.ClaudeCode` |
 | Any — npm (Node 22+) | `npm install -g @anthropic-ai/claude-code` |
 
-Re-run `claude --version` afterwards, and `claude doctor` if anything looks off —
-it prints installation and settings diagnostics without starting a session.
-Claude Code requires a Pro, Max, Team, Enterprise or Console account; the free
-Claude.ai plan does not include it. Full matrix:
+`claude doctor` prints installation and settings diagnostics without starting a
+session. Claude Code requires a Pro, Max, Team, Enterprise or Console account;
+the free Claude.ai plan doesn't include it. Full matrix:
 [Claude Code setup](https://code.claude.com/docs/en/setup).
 
-Already have the **desktop app**? Install the CLI as well — adding a third-party
-marketplace is a terminal step. See [Desktop app](#desktop-app) below.
+</details>
 
-### Step 1 — install OMA
-
-Start Claude Code in any directory and run:
-
-```
-/plugin marketplace add webmehedi/oma
-/plugin install oma@oma
-```
-
-The first command registers this repo as a marketplace; the second installs the
-plugin from it. `/plugin install` asks for a scope — choose **user** to have OMA
-available in every project.
-
-Read the install summary. If it reports `Run /reload-plugins to activate.`, run
-`/reload-plugins`.
-
-**Then restart the session before you start a project.** OMA's hooks — the ones
-that freeze contracts, log every command and block deploys — are loaded at
-session start. A mid-session install can leave them inert, and that failure is
-*silent*, because
-[every hook fails open by design](TROUBLESHOOTING.md#hooks-dont-seem-to-be-doing-anything).
-
-### Step 1, alternative — install from your shell
-
-The same two steps, non-interactive. Use these for a new machine, a script, or
-any environment where `/plugin` isn't available:
-
-```bash
-claude plugin marketplace add webmehedi/oma
-claude plugin install oma@oma
-```
-
-Installs to user scope; pass `--scope project` or `--scope local` to change that.
-Plugins installed this way load the next time you start Claude Code.
-
-### Step 2 — verify it worked
-
-```bash
-claude plugin list
-```
-
-`oma@oma` should be listed and enabled. Then, in a session, typing `/oma:` should
-complete to the eight OMA commands, and:
-
-```
-/oma:status
-```
-
-should answer — outside a project it tells you there's no OMA project here,
-which is the correct answer. To see exactly what was installed and what it costs
-you per turn:
-
-```bash
-claude plugin details oma
-```
-
-A complete install reports **8 skills, 12 agents and 4 hooks**
-(`SessionStart`, `PreToolUse`, `PostToolUse`, `SubagentStop`), and about
-**1.7k always-on tokens** — the skills and agents themselves are only paid for
-when they fire.
-
-### Desktop app
+<details>
+<summary><b>Desktop app</b></summary>
 
 The desktop app's plugin browser (**+** beside the prompt box → **Plugins** →
-**Add plugin**) lists plugins from marketplaces you have *already configured*,
-and `/plugin` opens a terminal-only panel. So add the marketplace once from a
-terminal — the app's own integrated terminal counts:
-
-```bash
-claude plugin marketplace add webmehedi/oma
-claude plugin install oma@oma
-```
-
-Restart the app. OMA then appears under **+ → Plugins**, and `/oma:init` works in
-Code-tab sessions.
+**Add plugin**) only lists marketplaces you have *already configured*, and
+`/plugin` opens a terminal-only panel. So run the two shell commands above once —
+the app's own integrated terminal counts — then **restart the app**. OMA appears
+under **+ → Plugins**, and its commands work in any Code-tab session.
 
 Plugins aren't available in the desktop app's cloud or WSL sessions. For cloud
-sessions, use the settings file below.
+sessions, use the settings-file method below.
 
-### Without a terminal, or for a whole team
+</details>
 
-Declare the marketplace and the plugin in `.claude/settings.json` and Claude Code
-installs it at session start. This is also how you pin OMA for everyone working
-on a repository, and the only route into cloud sessions:
+<details>
+<summary><b>For a whole team, or where no terminal is available</b></summary>
+
+Declare the marketplace and the plugin in `.claude/settings.json`; Claude Code
+installs it at session start. This is how you pin OMA for everyone working on a
+repository, and the only route into cloud sessions:
 
 ```json
 {
@@ -279,26 +314,52 @@ on a repository, and the only route into cloud sessions:
 }
 ```
 
-Put that in the project's `.claude/settings.json` to share it with collaborators,
-or in `~/.claude/settings.json` for yourself everywhere. To pin a release instead
-of tracking `main`, add `"ref": "v0.6.2"` alongside `"repo"`.
+Project `.claude/settings.json` shares it with collaborators; `~/.claude/settings.json`
+applies it to everything you do. To pin a release rather than track `main`, add
+`"ref": "v0.6.3"` alongside `"repo"`.
 
-### Updating
+</details>
 
-Third-party marketplaces don't auto-update by default, so pull both:
+<details>
+<summary><b>Verifying in depth, updating, uninstalling</b></summary>
+
+**What got installed, and what it costs per turn:**
+
+```bash
+claude plugin details oma
+```
+
+A complete install reports **8 skills, 12 agents and 4 hooks** (`SessionStart`,
+`PreToolUse`, `PostToolUse`, `SubagentStop`) and about **1.7k always-on tokens** —
+the skills and agents themselves are only paid for when they fire.
+
+**Updating** — third-party marketplaces don't auto-update by default, so pull
+both, then restart:
 
 ```bash
 claude plugin marketplace update oma
 claude plugin update oma
 ```
 
-Restart afterwards. [CHANGELOG.md](CHANGELOG.md) has what changed. Updating never
-touches your projects — everything OMA knows about a project lives in that
-project's `.oma/` directory.
+Updating never touches your projects: everything OMA knows about a project lives
+in that project's `.oma/` directory. [CHANGELOG.md](CHANGELOG.md) has what changed.
 
-### Local development
+**Uninstalling:**
 
-To work on OMA itself, skip installation entirely:
+```bash
+claude plugin uninstall oma@oma
+claude plugin marketplace remove oma
+```
+
+Your projects are unaffected — `.oma/` is plain Markdown and JSON committed in
+your repo, and stays readable with the plugin gone.
+
+</details>
+
+<details>
+<summary><b>Working on OMA itself</b></summary>
+
+Skip installation entirely:
 
 ```bash
 git clone https://github.com/webmehedi/oma
@@ -309,18 +370,10 @@ A `--plugin-dir` copy takes precedence over an installed one for that session, s
 you can test changes without uninstalling first. `bash scripts/selftest.sh` runs
 the 41-case hook suite.
 
-### Uninstalling
+</details>
 
-```bash
-claude plugin uninstall oma@oma
-claude plugin marketplace remove oma
-```
-
-Your projects are unaffected — `.oma/` is plain Markdown and JSON committed in
-your repo, and stays readable with the plugin gone.
-
-Hitting an error at any step? [TROUBLESHOOTING.md](TROUBLESHOOTING.md#installation)
-covers each install failure by its exact message.
+Hit an error? [TROUBLESHOOTING.md](TROUBLESHOOTING.md#installation) covers each
+install failure by its exact message.
 
 ## 🚦 The pipeline
 
@@ -449,7 +502,15 @@ flowchart TD
 - **Blocking questions halt the pipeline.** When an agent hits a decision only
   you can make, the system stops and asks rather than building on a guess.
 
-Full architecture and rationale: **[DESIGN.md](DESIGN.md)**. Something gone wrong: **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**. What changed and when: **[CHANGELOG.md](CHANGELOG.md)**.
+### 📚 The rest of the documentation
+
+| | |
+|---|---|
+| **[GETTING-STARTED.md](GETTING-STARTED.md)** | The step-by-step path from nothing to a shipped app. Assumes no coding ability. |
+| **[DESIGN.md](DESIGN.md)** | Full architecture and the reasoning behind every constraint |
+| **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Real failure modes, hit during real runs, and what to do |
+| **[CHANGELOG.md](CHANGELOG.md)** | What changed, when, and what it fixed |
+| **[examples/ledgerly/](examples/ledgerly)** | A complete real run — 74 files, failures included |
 
 ## 🗿 Existing codebases
 
@@ -628,7 +689,38 @@ the naive approach hit two real incompatibilities in validation and cost an hour
 - **macOS or Linux**, or Windows through **WSL**. The hook scripts are bash;
   native Windows is untested.
 
+Not sure whether you have these? [Part 0 of the getting-started
+guide](GETTING-STARTED.md#part-0--what-you-need-first) checks each one and
+installs whatever's missing.
+
 ## ❓ FAQ
+
+<details>
+<summary><b>Do I need to know how to code?</b></summary>
+
+No — you're never asked to write code, and the
+[step-by-step guide](GETTING-STARTED.md) assumes no experience.
+
+What you *do* need is honest to say up front: a paid Claude account, a computer
+running macOS or Linux (or Windows with WSL), a willingness to type about fifteen
+copy-paste commands into a terminal, and — the real one — **a few hours of your
+actual attention at the eight gates.** OMA can build the thing; it can't decide
+what the thing should be. That judgment is the part only you have, and the gates
+are where you supply it.
+
+</details>
+
+<details>
+<summary><b>How long does it take from idea to working app?</b></summary>
+
+Roughly a working day of wall-clock in the validation run, spread over as many
+sittings as you like. Nothing lives in the conversation, so you can stop
+anywhere, close the laptop, and pick up next week with `/oma:status`.
+
+The eight phases are unequal: Discovery and Design want your careful attention,
+Build is long and mostly hands-off, and Ship is a verification pass.
+
+</details>
 
 <details>
 <summary><b>How is this different from just asking Claude to build my app?</b></summary>
@@ -801,6 +893,18 @@ Built and maintained by **S M Mehedi Hasan**, Founder of Coder71 Limited.
 ---
 
 <div align="center">
+
+### Ready to build something?
+
+**[📖 Start with the step-by-step guide →](GETTING-STARTED.md)**
+
+or, if you've done this before:
+
+```bash
+claude plugin marketplace add webmehedi/oma && claude plugin install oma@oma
+```
+
+<br>
 
 **Topics:** `claude-code` · `claude-code-plugin` · `ai-agents` · `multi-agent-systems` ·
 `sdlc` · `agentic-workflow` · `ai-software-development` · `autonomous-agents` ·

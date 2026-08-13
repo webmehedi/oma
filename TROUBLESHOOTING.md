@@ -42,8 +42,9 @@ claude plugin install oma@oma
 
 Then restart the app. For **cloud sessions**, plugins can't be installed this way
 at all; declare OMA in the repository's `.claude/settings.json` under
-`extraKnownMarketplaces` + `enabledPlugins` instead — the JSON is in
-[Installation](README.md#without-a-terminal-or-for-a-whole-team).
+`extraKnownMarketplaces` + `enabledPlugins` instead — the JSON is under
+*"For a whole team, or where no terminal is available"* in
+[Installation](README.md#-installation).
 
 ### `Marketplace "oma" not found`
 

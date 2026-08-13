@@ -3,6 +3,34 @@
 All notable changes to OMA. Versions follow [semver](https://semver.org/);
 while the plugin is pre-1.0, minor versions may change behaviour.
 
+## [0.6.3] — 2026-08-13
+
+### Added
+- **[GETTING-STARTED.md](GETTING-STARTED.md)** — the whole path from "I have an
+  idea" to a running application, written for someone who has never opened a
+  terminal. Checking for and installing Node, git and Claude Code per platform;
+  installing OMA; writing a one-line idea that scopes well; the three-step loop,
+  taught once and then applied; a walkthrough of all eight phases saying what
+  each produces, **how much of your attention its review deserves**, and what to
+  actually check; opening the mockups; running the finished app; deploying it
+  yourself; the five things that will go wrong; a command cheat sheet; and a
+  glossary of every term that isn't ordinary English.
+
+  It sets expectations honestly rather than selling: you need a paid Claude
+  account, a terminal, a real budget, and a few hours of attention at the gates —
+  and OMA still can't decide what your product should be.
+
+### Changed
+- **README restructured as a landing page.** A hero with a start-here call to
+  action, a three-panel "one sentence in, a tested application out" walkthrough,
+  and a plain statement of what you're holding at the end. The 170-line
+  installation section is now a two-minute path with the five other routes —
+  in-session, desktop, team `settings.json`, updating, local development —
+  folded into collapsible blocks, so the page scans instead of scrolling.
+- FAQ gained the two questions a non-developer asks first: whether coding is
+  required, and how long this actually takes. Requirements links to the
+  getting-started check for each dependency.
+
 ## [0.6.2] — 2026-08-13
 
 ### Added
